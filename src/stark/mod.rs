@@ -19,7 +19,7 @@ pub use utils::{
     CompositionCoefficients };
 
 pub use options::ProofOptions;
-pub use proof::{ StarkProof, DeepValues };
+pub use proof::{ StarkProof, DeepValues, GenOutput, ProgramAssembly};
 pub use prover::{ prove };
 pub use verifier::{ verify };
 

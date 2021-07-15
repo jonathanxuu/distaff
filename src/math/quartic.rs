@@ -1,6 +1,6 @@
 use crate::math::{ field };
 use crate::utils::uninit_vector;
-
+use sp_std::vec::Vec;
 /// Evaluates degree 3 polynomial `p` at coordinate `x`. This function is about 30% faster than
 /// the `polys::eval` function.
 pub fn eval(p: &[u128], x: u128) -> u128 {
@@ -154,7 +154,7 @@ pub fn transpose(vector: &[u128], stride: usize) -> Vec<[u128; 4]> {
 /// Re-interprets a vector of integers as a vector of quartic elements.
 pub fn to_quartic_vec(vector: Vec<u128>) -> Vec<[u128; 4]> {
     assert!(vector.len() % 4 == 0, "vector length must be divisible by 4");
-    let mut v = std::mem::ManuallyDrop::new(vector);
+    let mut v = sp_std::mem::ManuallyDrop::new(vector);
     let p = v.as_mut_ptr();
     let len = v.len() / 4;
     let cap = v.capacity() / 4;

@@ -5,6 +5,7 @@ use crate::{
     PROGRAM_DIGEST_SIZE,
 };
 use super::{ decoder::Decoder, stack::Stack, super::MAX_CONSTRAINT_DEGREE };
+use sp_std::{vec, vec::Vec};
 
 // TYPES AND INTERFACES
 // ================================================================================================

@@ -1,9 +1,11 @@
+use sp_std::ptr::null;
+
 use distaff::{ ProofOptions };
 
 pub fn parse_args(args: &[String]) -> (usize, ProofOptions) {
     
     let default_options = ProofOptions::default();
-    if args.len() == 1 { return (6, default_options); }
+    if args.len() == 1 { return (0, default_options); }
 
     let n: usize = args[1].parse().unwrap();
     if args.len() == 2 { return (n, default_options); }

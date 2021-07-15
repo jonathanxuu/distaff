@@ -1,3 +1,5 @@
+use serde::{ Serialize, Deserialize };
+
 // FLOW CONTROL OPERATIONS
 // ================================================================================================
 #[repr(u8)]
@@ -19,9 +21,9 @@ impl FlowOps {
     }
 }
 
-impl std::fmt::Display for FlowOps {
+impl sp_std::fmt::Display for FlowOps {
 
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
         return match self {
 
             FlowOps::Hacc   => write!(f, "hacc"),
@@ -42,7 +44,7 @@ impl std::fmt::Display for FlowOps {
 // USER OPERATIONS
 // ================================================================================================
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize )]
 pub enum UserOps {
     
     // low-degree operations
@@ -116,9 +118,9 @@ impl UserOps {
     }
 }
 
-impl std::fmt::Display for UserOps {
+impl sp_std::fmt::Display for UserOps {
 
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
         return match self {
 
             UserOps::Begin      => write!(f, "begin"),
@@ -169,7 +171,7 @@ impl std::fmt::Display for UserOps {
 
 // OPERATION HINTS
 // ================================================================================================
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum OpHint {
     EqStart,
     RcStart(u32),
@@ -188,8 +190,8 @@ impl OpHint {
     }
 }
 
-impl std::fmt::Display for OpHint {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl sp_std::fmt::Display for OpHint {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
         return match self {
             OpHint::EqStart          => write!(f, "::eq"),
             OpHint::RcStart(value)   => write!(f, ".{}", value),

@@ -3,6 +3,7 @@ use crate::{
     programs::{ Program, ProgramInputs, blocks::{ ProgramBlock, Span, Loop } },
     MIN_TRACE_LENGTH, HACC_NUM_ROUNDS,
 };
+use sp_std::vec::Vec;
 
 // RE-EXPORTS
 // ================================================================================================
@@ -50,8 +51,14 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
 fn execute_blocks(blocks: &[ProgramBlock], decoder: &mut Decoder, stack: &mut Stack)
 {
     // execute first block in the sequence, which mast be a Span block
+
     match &blocks[0] {
-        ProgramBlock::Span(block) => execute_span(block, decoder, stack, true),
+        ProgramBlock::Span(block) => {
+
+            execute_span(block, decoder, stack, true)
+        
+        },
+
         _ => panic!("first block in a sequence must be a Span block"),
     }
 
@@ -110,7 +117,9 @@ fn execute_span(block: &Span, decoder: &mut Decoder, stack: &mut Stack, is_first
     for i in 0..block.length() {
         let (op_code, op_hint) = block.get_op(i);
         decoder.decode_op(op_code, op_hint.value());
+
         stack.execute(op_code, op_hint);
+
     }
 }
 

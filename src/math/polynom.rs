@@ -1,6 +1,9 @@
-use std::mem;
+use sp_std::mem;
 use crate::math::{ field, fft };
 use crate::utils::{ uninit_vector, filled_vector };
+use sp_std::vec;
+use sp_std::vec::Vec;
+
 
 // POLYNOMIAL EVALUATION
 // ================================================================================================
@@ -107,7 +110,7 @@ pub fn interpolate_fft_twiddles(v: &mut [u128], inv_twiddles: &[u128], unpermute
 
 /// Adds polynomial `a` to polynomial `b`
 pub fn add(a: &[u128], b: &[u128]) -> Vec<u128> {
-    let result_len = std::cmp::max(a.len(), b.len());
+    let result_len = sp_std::cmp::max(a.len(), b.len());
     let mut result = Vec::with_capacity(result_len);
     for i in 0..result_len {
         let c1 = if i < a.len() { a[i] } else { field::ZERO };
@@ -119,7 +122,7 @@ pub fn add(a: &[u128], b: &[u128]) -> Vec<u128> {
 
 /// Subtracts polynomial `b` from polynomial `a`
 pub fn sub(a: &[u128], b: &[u128]) -> Vec<u128> {
-    let result_len = std::cmp::max(a.len(), b.len());
+    let result_len = sp_std::cmp::max(a.len(), b.len());
     let mut result = Vec::with_capacity(result_len);
     for i in 0..result_len {
         let c1 = if i < a.len() { a[i] } else { field::ZERO };

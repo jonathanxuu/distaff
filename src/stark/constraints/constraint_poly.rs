@@ -1,5 +1,6 @@
 use crate::math::{ field, polynom, parallel };
 use crate::stark::{ MAX_CONSTRAINT_DEGREE, utils::CompositionCoefficients };
+use sp_std::{vec, vec::Vec};
 
 // TYPES AND INTERFACES
 // ================================================================================================

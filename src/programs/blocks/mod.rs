@@ -1,5 +1,7 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
+use serde::{Serialize, Deserialize};
 use super::{ OpCode, OpHint, hash_seq, hash_op, BASE_CYCLE_LENGTH };
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -26,7 +28,7 @@ const LOOP_BLOCK_SUFFIX: [u8; 16] = [
 // TYPES AND INTERFACES
 // ================================================================================================
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum ProgramBlock {
     Span(Span),
     Group(Group),
@@ -34,24 +36,24 @@ pub enum ProgramBlock {
     Loop(Loop),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Span {
     op_codes    : Vec<OpCode>,
     op_hints    : HashMap<usize, OpHint>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Group {
     body        : Vec<ProgramBlock>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Switch {
     t_branch    : Vec<ProgramBlock>,
     f_branch    : Vec<ProgramBlock>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Loop {
     body        : Vec<ProgramBlock>,
     skip        : Vec<ProgramBlock>,
@@ -71,8 +73,8 @@ impl ProgramBlock {
 
 }
 
-impl std::fmt::Debug for ProgramBlock {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for ProgramBlock {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         match self {
             ProgramBlock::Span(block)   => write!(f, "{:?}", block)?,
             ProgramBlock::Group(block)  => write!(f, "{:?}", block)?,
@@ -178,8 +180,8 @@ impl Span {
     }
 }
 
-impl std::fmt::Debug for Span {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for Span {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         let (op_code, op_hint) = self.get_op(0);
         write!(f, "{}{}", op_code, op_hint)?;
 
@@ -218,8 +220,8 @@ impl Group {
     }
 }
 
-impl std::fmt::Debug for Group {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for Group {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         write!(f, "block ")?;
         for block in self.body.iter() {
             write!(f, "{:?} ", block)?;
@@ -268,8 +270,8 @@ impl Switch {
     }
 }
 
-impl std::fmt::Debug for Switch {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for Switch {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         write!(f, "if ")?;
         for block in self.t_branch.iter() {
             write!(f, "{:?} ", block)?;
@@ -326,8 +328,8 @@ impl Loop {
     }
 }
 
-impl std::fmt::Debug for Loop {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for Loop {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         write!(f, "while ")?;
         for block in self.body.iter() {
             write!(f, "{:?} ", block)?;

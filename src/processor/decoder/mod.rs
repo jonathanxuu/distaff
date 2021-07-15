@@ -6,6 +6,7 @@ use crate::{
     SPONGE_WIDTH, BASE_CYCLE_LENGTH, PUSH_OP_ALIGNMENT,
 };
 use super::opcodes::{ FlowOps, UserOps };
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;

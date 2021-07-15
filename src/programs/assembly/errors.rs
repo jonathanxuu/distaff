@@ -1,3 +1,5 @@
+extern crate alloc;
+use alloc::string::String;
 // TYPES AND INTERFACES
 // ================================================================================================
 pub struct AssemblyError {
@@ -176,14 +178,14 @@ impl AssemblyError {
 // COMMON TRAIT IMPLEMENTATIONS
 // ================================================================================================
 
-impl std::fmt::Debug for AssemblyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Debug for AssemblyError {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         write!(f, "assembly error at {}: {}", self.step, self.message)
     }
 }
 
-impl std::fmt::Display for AssemblyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl sp_std::fmt::Display for AssemblyError {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
         write!(f, "assembly error at {}: {}", self.step, self.message)
     }
 }

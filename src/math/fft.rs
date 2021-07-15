@@ -1,5 +1,5 @@
-use crossbeam_utils::thread;
 use crate::math::field;
+use sp_std::vec::Vec;
 
 // CONSTANTS
 // ================================================================================================
@@ -27,15 +27,19 @@ pub fn fft_in_place(values: &mut [u128], twiddles: &[u128], count: usize, stride
             fft_in_place(values, twiddles, 2 * count, 2 * stride, offset, num_threads);
         } else if num_threads > 1 {
             // run half of FFT in the current thread, and spin up a new thread for the other half
-            thread::scope(|s| {
-                // get another mutable reference to values to be used inside the new thread;
-                // this is OK because halves of FFT don't step on each other
-                let values2 = unsafe { &mut *(values as *mut [u128]) };
-                s.spawn(move |_| {
-                    fft_in_place(values2, twiddles, count, 2 * stride, offset, num_threads / 2);
-                });
-                fft_in_place(values, twiddles, count, 2 * stride, offset + stride, num_threads / 2);
-            }).unwrap();
+            fft_in_place(values, twiddles, count, 2 * stride, offset, num_threads);
+            fft_in_place(values, twiddles, count, 2 * stride, offset + stride, num_threads);
+            // thread::scope(|s| {
+            //     // get another mutable reference to values to be used inside the new thread;
+            //     // this is OK because halves of FFT don't step on each other
+            //     let values2 = unsafe { &mut *(values as *mut [u128]) };
+            //     s.spawn(move |_| {
+            //         fft_in_place(values2, twiddles, count, 2 * stride, offset, num_threads / 2);
+            //     });
+            //     fft_in_place(values, twiddles, count, 2 * stride, offset + stride, num_threads / 2);
+            // }).unwrap();
+        
+        
         }
         else {
             fft_in_place(values, twiddles, count, 2 * stride, offset, num_threads);

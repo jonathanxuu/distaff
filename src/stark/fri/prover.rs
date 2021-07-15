@@ -1,4 +1,4 @@
-use std::mem;
+use sp_std::{mem, vec, vec::Vec};
 use crate::math::{ field, quartic };
 use crate::crypto::{ MerkleTree };
 use crate::stark::{ ProofOptions };

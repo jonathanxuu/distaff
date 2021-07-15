@@ -33,10 +33,7 @@ use wasm_bindgen_test::*;
 use codec::{Decode, Encode};
 use crate::alloc::string::ToString;
 
-pub fn verify(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128], proof: &StarkProof) -> Result<bool, String>
-{
-    return stark::verify(program_hash, public_inputs, outputs, proof);
-}
+
 
 // EXECUTOR
 // ================================================================================================
@@ -57,14 +54,11 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     let options_slice: &str = &options_string[..];
     let options: ProofOptions = serde_json::from_str(options_slice).unwrap();
 
-    console_log!("program is {:?},inputs is {:?},num is {:?},options is {:?}",serde_json::to_string(&program).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&num_outputs).unwrap(),serde_json::to_string(&options).unwrap());
-
     assert!(num_outputs <= MAX_OUTPUTS, 
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);
 
     // execute the program to create an execution trace
     let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
-
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
     debug!("Generated execution trace of {} registers and {} steps",
         trace.register_count(),
@@ -89,31 +83,21 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     // console_log!("outputssss = {:?}",outputs);
     console_log!("hash = {:?}",hex::encode(program.hash()));
     // generate STARK proof
-    console_log!("trace is {:?},inputs.public is {:?}. outoupts is {:?}. option is {:?}",serde_json::to_string(&trace).unwrap(),inputs.get_public_inputs(),outputs,serde_json::to_string(&options).unwrap());
-
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, &options);
-    console_log!("prooooooooof is {:?}",serde_json::to_string(&proof).unwrap());
     let proof_bytes = bincode::serialize(&proof).unwrap();
     
-    match stark::verify(program.hash(), inputs.get_public_inputs(), &outputs, &proof) {
-        Ok(_) => console_log!("okokok"),
-        Err(msg) => console_log!("Failed to verify execution: {}", msg)
-    }
-
     console_log!("proof = {:?}",proof_bytes);
 
     let proof_hex = hex::encode(&proof_bytes);
 
     let gen_output = GenOutput{
         stark_output: outputs,
-        // stark_proof: proof_hex,
-        stark_proof: serde_json::to_string(&proof).unwrap(),
+        stark_proof: proof_hex,
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
     return res;
 }
-
 
 #[wasm_bindgen]
 pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: String, num_outputs: usize, options_string: String) -> String
@@ -133,7 +117,7 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
     let inputs: ProgramInputs = serde_json::from_str(inputs_slice).unwrap();
 
     let options_slice: &str = &options_string[..];
-    let options = ProofOptions::default();
+    let options: ProofOptions = serde_json::from_str(options_slice).unwrap();
 
     assert!(num_outputs <= MAX_OUTPUTS, 
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);

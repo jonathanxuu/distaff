@@ -4,6 +4,7 @@ use crate::{
     ProgramInputs, OpCode, OpHint,
     HASH_STATE_WIDTH, MIN_STACK_DEPTH, MAX_STACK_DEPTH,
 };
+use sp_std::{vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -30,7 +31,7 @@ impl Stack {
 
         // allocate space for register traces and initialize the first state with public inputs
         let public_inputs = inputs.get_public_inputs();
-        let init_stack_depth = std::cmp::max(public_inputs.len(), MIN_STACK_DEPTH);
+        let init_stack_depth = sp_std::cmp::max(public_inputs.len(), MIN_STACK_DEPTH);
         let mut registers: Vec<Vec<u128>> = Vec::with_capacity(init_stack_depth);
         for i in 0..init_stack_depth {
             let mut register = vec![field::ZERO; init_trace_length];
@@ -163,7 +164,7 @@ impl Stack {
         assert!(self.depth >= 2, "stack underflow at step {}", self.step);
         let x = self.registers[0][self.step - 1];
         let y = self.registers[1][self.step - 1];
-        assert!(x == y, "ASSERTEQ failed at step {}", self.step);
+        assert!(x == y, "ASSERTEQ failed at step {},x = {:?},y={:?}", self.step,x,y);
         self.shift_left(2, 2);
     }
 
@@ -196,7 +197,7 @@ impl Stack {
                 }
             },
             OpHint::None => {
-                assert!(self.tape_a.len() > 0, "attempt to read from empty tape A at step {}", self.step);
+                assert!(self.tape_a.len() > 0, "1attempt to read from empty tape A at step {}", self.step);
             },
             _ => panic!("execution hint {:?} is not valid for READ operation", hint)
         }
@@ -231,8 +232,8 @@ impl Stack {
                 }
             },
             OpHint::None => {
-                assert!(self.tape_a.len() > 0, "attempt to read from empty tape A at step {}", self.step);
-                assert!(self.tape_b.len() > 0, "attempt to read from empty tape B at step {}", self.step);
+                assert!(self.tape_a.len() > 0, "2attempt to read from empty tape A at step {}", self.step);
+                assert!(self.tape_b.len() > 0, "3attempt to read from empty tape B at step {}", self.step);
             },
             _ => panic!("execution hint {:?} is not valid for READ2 operation", hint)
         }
@@ -487,8 +488,8 @@ impl Stack {
             },
             OpHint::None => {
                 assert!(self.depth >= 8, "stack underflow at step {}", self.step);
-                assert!(self.tape_a.len() > 0, "attempt to read from empty tape A at step {}", self.step);
-                assert!(self.tape_b.len() > 0, "attempt to read from empty tape B at step {}", self.step);
+                assert!(self.tape_a.len() > 0, "4attempt to read from empty tape A at step {}", self.step);
+                assert!(self.tape_b.len() > 0, "5attempt to read from empty tape B at step {}", self.step);
             },
             _ => panic!("execution hint {:?} is not valid for CMP operation", hint)
         }

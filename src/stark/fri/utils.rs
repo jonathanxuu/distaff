@@ -1,5 +1,6 @@
 use crate::crypto::{ HashFunction };
 use crate::utils::{ uninit_vector, as_bytes };
+use sp_std::vec::Vec;
 
 pub fn get_augmented_positions(positions: &[usize], column_length: usize) -> Vec<usize> {
     let row_length = column_length / 4;

@@ -1,5 +1,6 @@
 use crate::{ math::field };
 use super::{ AssemblyError, HintMap, OpCode, OpHint };
+use sp_std::{vec, vec::Vec};
 
 // CONSTANTS
 // ================================================================================================

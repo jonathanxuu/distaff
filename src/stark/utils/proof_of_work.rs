@@ -1,4 +1,5 @@
-use std::slice;
+use sp_std::slice;
+use alloc::string::String;
 use crate::stark::{ ProofOptions };
 
 pub fn find_pow_nonce(seed: [u8; 32], options: &ProofOptions) -> ([u8; 32], u64) {

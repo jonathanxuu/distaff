@@ -34,6 +34,8 @@ use conditional::{ enforce_choose, enforce_choose2, enforce_cswap2 };
 mod hash;
 use hash::{ enforce_rescr };
 
+use sp_std::{vec, vec::Vec};
+
 // CONSTANTS
 // ================================================================================================
 pub const NUM_AUX_CONSTRAINTS: usize = 2;

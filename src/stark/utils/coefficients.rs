@@ -1,4 +1,4 @@
-use std::{ ops::Range };
+use sp_std::{ ops::Range, vec, vec::Vec};
 use crate::{
     math::field,
     utils::RangeSlider,
@@ -139,9 +139,9 @@ fn build_boundary_coefficients(coefficients: &[u128]) -> (BoundaryCoefficients, 
 
 fn build_transition_coefficients(coefficients: &[u128], ctx_depth: usize, loop_depth: usize, stack_depth: usize) -> Vec<u128>{
 
-    let ctx_depth = std::cmp::max(ctx_depth, MIN_CONTEXT_DEPTH);
-    let loop_depth = std::cmp::max(loop_depth, MIN_LOOP_DEPTH);
-    let stack_depth = std::cmp::max(stack_depth, MIN_STACK_DEPTH);
+    let ctx_depth = sp_std::cmp::max(ctx_depth, MIN_CONTEXT_DEPTH);
+    let loop_depth = sp_std::cmp::max(loop_depth, MIN_LOOP_DEPTH);
+    let stack_depth = sp_std::cmp::max(stack_depth, MIN_STACK_DEPTH);
 
     // compute number of used transition constraints
     let num_constraints = NUM_STATIC_DECODER_CONSTRAINTS

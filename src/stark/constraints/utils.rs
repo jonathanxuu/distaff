@@ -1,6 +1,7 @@
 use crate::math::{ field, polynom, fft };
 use crate::utils::{ filled_vector };
 use crate::{ BASE_CYCLE_LENGTH };
+use sp_std::vec::Vec;
 
 // BASIC CONSTRAINTS OPERATORS
 // ================================================================================================

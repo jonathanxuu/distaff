@@ -6,6 +6,7 @@ use crate::{
     BASE_CYCLE_LENGTH as CYCLE_LENGTH,
     HASH_NUM_ROUNDS as NUM_ROUNDS,
 };
+use sp_std::vec::Vec;
 
 // HASHER FUNCTIONS
 // ================================================================================================

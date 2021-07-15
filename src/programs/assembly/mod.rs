@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
+use sp_std::{vec, vec::Vec};
 use super::{ Program, ProgramBlock, Span, Group, Switch, Loop, OpCode, OpHint, BASE_CYCLE_LENGTH };
 
 mod parsers;

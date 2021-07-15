@@ -4,6 +4,9 @@ use crate::{
     MIN_TRACE_LENGTH
 };
 use super::{ StarkProof, TraceState, ConstraintEvaluator, CompositionCoefficients, fri, utils };
+use alloc::string::String;
+use sp_std::{vec, vec::Vec};
+
 
 // VERIFIER FUNCTION
 // ================================================================================================
@@ -12,7 +15,6 @@ pub fn verify(program_hash: &[u8; 32], inputs: &[u128], outputs: &[u128], proof:
 {
     let options = proof.options();
     let hash_fn = options.hash_fn();
-
     // 1 ----- Verify proof of work and determine query positions ---------------------------------
     let degree_proof = proof.degree_proof();
     let mut fri_roots: Vec<u8> = Vec::new();

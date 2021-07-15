@@ -3,9 +3,12 @@ use crate::crypto::{ MerkleTree, HashFunction };
 use crate::stark::{ CompositionCoefficients, utils };
 use crate::utils::{ uninit_vector, filled_vector, as_bytes };
 use super::{ TraceState };
+use sp_std::{vec, vec::Vec};
+use serde::{Serialize, Deserialize};
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceTable {
     registers       : Vec<Vec<u128>>,
     polys           : Vec<Vec<u128>>,
@@ -149,7 +152,7 @@ impl TraceTable {
         let inv_twiddles = fft::get_inv_twiddles(root, self.unextended_length());
         
         // move register traces into polys
-        std::mem::swap(&mut self.registers, &mut self.polys);
+        sp_std::mem::swap(&mut self.registers, &mut self.polys);
 
         // extend all registers
         let domain_size = self.domain_size();
@@ -267,7 +270,7 @@ impl TraceTable {
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashMap;
+    use sp_std::collections::HashMap;
     use crate::{
         math::{ field, polynom, parallel, fft },
         crypto::hash::blake3,

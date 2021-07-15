@@ -8,7 +8,8 @@ pub mod conditional;
 pub mod fibonacci;
 pub mod merkle;
 pub mod range;
-
+pub mod testrange;
+pub mod stacktest;
 pub struct Example {
     pub program         : Program,
     pub inputs          : ProgramInputs,

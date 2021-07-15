@@ -1,7 +1,14 @@
-use std::slice;
-use std::collections::{ HashMap, BTreeSet };
+use sp_std::{slice, vec};
+use hashbrown::HashMap;
+use sp_std::vec::Vec;
+
+#[cfg(feature = "alloc")]
+use alloc::{collections::BTreeSet as HashSet, vec::Vec};
+
+// use sp_std::collections::{ BTreeSet };
 use serde::{ Serialize, Deserialize };
 use crate::crypto::{ HashFunction };
+use sp_std::collections::btree_set::BTreeSet;
 
 // TYPES AND INTERFACES
 // ================================================================================================

@@ -1,4 +1,3 @@
-use std::time::Instant;
 use log::debug;
 use crate::{
     math::{ field, polynom, fft },
@@ -11,37 +10,46 @@ use super::{
     MAX_CONSTRAINT_DEGREE,
 };
 
+use sp_std::vec::Vec;
+use wasm_bindgen_test::*;
+
 // PROVER FUNCTION
 // ================================================================================================
 
 pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options: &ProofOptions) -> StarkProof {
     // 1 ----- extend execution trace -------------------------------------------------------------
-    let now = Instant::now();
+
+    console_log!("trace is {:?}, inputs is{:?},outputs is {:?}.options is {:?}",serde_json::to_string(&trace).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&outputs).unwrap(),serde_json::to_string(&options).unwrap());
+
 
     // build LDE domain and LDE twiddles (for FFT evaluation over LDE domain)
     let lde_root = field::get_root_of_unity(trace.domain_size());
+    console_log!("lde_root is{:?}",lde_root);
+
+    console_log!("2 paras: lde_root is {:?},trace.domain_size() is {:?}",lde_root,trace.domain_size());
     let lde_domain = field::get_power_series(lde_root, trace.domain_size());
+    console_log!("lde_domain is{:?}",lde_domain);
+
     let lde_twiddles = twiddles_from_domain(&lde_domain);
+    console_log!("lde_twiddles is{:?}",lde_twiddles);
 
     // extend the execution trace registers to LDE domain
     trace.extend(&lde_twiddles);
-    debug!("Extended execution trace from {} to {} steps in {} ms",
+    debug!("Extended execution trace from {} to {} steps",
         trace.unextended_length(),
-        trace.domain_size(), 
-        now.elapsed().as_millis());
+        trace.domain_size());
+
+    // console_log!("trace before 2 is {:?}",serde_json::to_string(&trace).unwrap());
 
     // 2 ----- build Merkle tree from the extended execution trace ------------------------------------
-    let now = Instant::now();
     let trace_tree = trace.build_merkle_tree(options.hash_fn());
-    debug!("Built trace Merkle tree in {} ms", 
-        now.elapsed().as_millis());
+
 
     // 3 ----- evaluate constraints ---------------------------------------------------------------
-    let now = Instant::now();
     
     // initialize constraint evaluation table
     let mut constraints = ConstraintTable::new(&trace, trace_tree.root(), inputs, outputs);
-    
+
     // allocate space to hold current and next states for constraint evaluations
     let mut current = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
     let mut next = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
@@ -63,20 +71,16 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         constraints.evaluate(&current, &next, lde_domain[i], i / stride);
     }
 
-    debug!("Evaluated {} constraints over domain of {} elements in {} ms",
+    debug!("Evaluated {} constraints over domain of {} elements",
         constraints.constraint_count(),
-        constraints.evaluation_domain_size(),
-        now.elapsed().as_millis());
+        constraints.evaluation_domain_size());
 
     // 4 ----- convert constraint evaluations into a polynomial -----------------------------------
-    let now = Instant::now();
     let constraint_poly = constraints.combine_polys();
-    debug!("Converted constraint evaluations into a single polynomial of degree {} in {} ms",
-        constraint_poly.degree(),
-        now.elapsed().as_millis());
+    debug!("Converted constraint evaluations into a single polynomial of degree {}",
+        constraint_poly.degree());
 
     // 5 ----- build Merkle tree from constraint polynomial evaluations ---------------------------
-    let now = Instant::now();
     
     // evaluate constraint polynomial over the evaluation domain
     let constraint_evaluations = constraint_poly.eval(&lde_twiddles);
@@ -84,11 +88,8 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     // put evaluations into a Merkle tree; 4 evaluations per leaf
     let constraint_evaluations = evaluations_to_leaves(constraint_evaluations);
     let constraint_tree = MerkleTree::new(constraint_evaluations, options.hash_fn());
-    debug!("Evaluated constraint polynomial and built constraint Merkle tree in {} ms",
-        now.elapsed().as_millis());
 
     // 6 ----- build and evaluate deep composition polynomial -------------------------------------
-    let now = Instant::now();
 
     // combine trace and constraint polynomials into the final deep composition polynomial
     let seed = constraint_tree.root();
@@ -100,21 +101,17 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     unsafe { composed_evaluations.set_len(composed_evaluations.capacity()); }
     polynom::eval_fft_twiddles(&mut composed_evaluations, &lde_twiddles, true);
 
-    debug!("Built composition polynomial and evaluated it over domain of {} elements in {} ms",
-        composed_evaluations.len(),
-        now.elapsed().as_millis());
+    debug!("Built composition polynomial and evaluated it over domain of {} elements",
+        composed_evaluations.len());
+
 
     // 7 ----- compute FRI layers for the composition polynomial ----------------------------------
-    let now = Instant::now();
     let composition_degree = utils::get_composition_degree(trace.unextended_length());
     debug_assert!(composition_degree == polynom::infer_degree(&composed_evaluations));
     let (fri_trees, fri_values) = fri::reduce(&composed_evaluations, &lde_domain, options);
-    debug!("Computed {} FRI layers from composition polynomial evaluations in {} ms",
-    fri_trees.len(),
-        now.elapsed().as_millis());
+
 
     // 8 ----- determine query positions -----------------------------------------------------------
-    let now = Instant::now();
 
     // combine all FRI layer roots into a single vector
     let mut fri_roots: Vec<u8> = Vec::new();
@@ -130,14 +127,16 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     let (seed, pow_nonce) = utils::find_pow_nonce(seed, &options);
 
     // generate pseudo-random query positions
+    console_log!("seed is {:?},lde_domain.len is {:?}, options is {:?}",seed,lde_domain.len(),serde_json::to_string(&options).unwrap());
+
     let positions = utils::compute_query_positions(&seed, lde_domain.len(), options);
-    debug!("Determined {} query positions from seed {} in {} ms",
+    console_log!("positions is {:?}",positions.clone());
+
+    debug!("Determined {} query positions from seed {}",
         positions.len(),
-        hex::encode(seed),
-        now.elapsed().as_millis());
+        hex::encode(seed));
 
     // 9 ----- build proof object -----------------------------------------------------------------
-    let now = Instant::now();
 
     // generate FRI proof
     let fri_proof = fri::build_proof(fri_trees, fri_values, &positions);
@@ -164,7 +163,6 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         trace.stack_depth(),
         &options);
 
-    debug!("Built proof object in {} ms", now.elapsed().as_millis());
     return proof;
 }
 
@@ -179,7 +177,7 @@ fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
 /// Re-interpret vector of 16-byte values as a vector of 32-byte arrays
 fn evaluations_to_leaves(evaluations: Vec<u128>) -> Vec<[u8; 32]> {
     assert!(evaluations.len() % 2 == 0, "number of values must be divisible by 2");
-    let mut v = std::mem::ManuallyDrop::new(evaluations);
+    let mut v = sp_std::mem::ManuallyDrop::new(evaluations);
     let p = v.as_mut_ptr();
     let len = v.len() / 2;
     let cap = v.capacity() / 2;

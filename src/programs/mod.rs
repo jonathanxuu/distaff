@@ -4,7 +4,6 @@ use crate::{
     utils::{ as_bytes },
     SPONGE_WIDTH, PROGRAM_DIGEST_SIZE, BASE_CYCLE_LENGTH, HACC_NUM_ROUNDS,
 };
-
 pub mod assembly;
 
 pub mod blocks;
@@ -15,13 +14,14 @@ pub use inputs::{ ProgramInputs };
 
 mod hashing;
 use hashing::{ hash_op, hash_acc, hash_seq };
+use serde::{Serialize, Deserialize};
 
 #[cfg(test)]
 mod tests;
 
 // TYPES AND INTERFACES
 // ================================================================================================
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Program {
     root    : Group,
     hash    : [u8; 32],
@@ -62,8 +62,8 @@ impl Program {
     }
 }
 
-impl std::fmt::Debug for Program {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+impl sp_std::fmt::Debug for Program {
+    fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result
     {
         let mut body_code = format!("{:?}", self.root);
         // get rid of extra `begin` token
