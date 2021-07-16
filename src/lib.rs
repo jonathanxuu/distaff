@@ -95,7 +95,7 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     console_log!("prooooooooof is {:?}",serde_json::to_string(&proof).unwrap());
     let proof_bytes = bincode::serialize(&proof).unwrap();
     
-    match stark::verify(program.hash(), inputs.get_public_inputs(), &outputs, &proof) {
+    match verifylib(program.hash(), inputs.get_public_inputs(), &outputs, &proof) {
         Ok(_) => console_log!("okokok"),
         Err(msg) => console_log!("Failed to verify execution: {}", msg)
     }
@@ -114,6 +114,10 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     return res;
 }
 
+pub fn verifylib(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128], proof: &StarkProof) -> Result<bool, String>
+{
+    return stark::verify(program_hash, public_inputs, outputs, proof);
+}
 
 #[wasm_bindgen]
 pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: String, num_outputs: usize, options_string: String) -> String
