@@ -1,7 +1,7 @@
 use sp_std::{slice, vec};
 use hashbrown::HashMap;
 use sp_std::vec::Vec;
-use wasm_bindgen_test::console_log;
+// use wasm_bindgen_test::console_log;
 
 #[cfg(feature = "alloc")]
 use alloc::{collections::BTreeSet as HashSet, vec::Vec};
@@ -160,7 +160,7 @@ impl MerkleTree {
 
     /// Checks whether the batch proof contains merkle paths for the of the specified indexes.
     pub fn verify_batch(root: &[u8; 32], indexes: &[usize], proof: &BatchMerkleProof, hash: HashFunction) -> bool {
-        console_log!("root is {:?},index is {:?}.proof is {:?}",root,indexes,serde_json::to_string(&proof).unwrap());
+        // console_log!("root is {:?},index is {:?}.proof is {:?}",root,indexes,serde_json::to_string(&proof).unwrap());
 
         let mut buf = [0u8; 64];
         let mut v: HashMap<usize, [u8; 32]> = HashMap::new();

@@ -11,7 +11,7 @@ use super::{
 };
 
 use sp_std::vec::Vec;
-use wasm_bindgen_test::*;
+// use wasm_bindgen_test::*;
 
 // PROVER FUNCTION
 // ================================================================================================
@@ -19,19 +19,19 @@ use wasm_bindgen_test::*;
 pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options: &ProofOptions) -> StarkProof {
     // 1 ----- extend execution trace -------------------------------------------------------------
 
-    console_log!("trace is {:?}, inputs is{:?},outputs is {:?}.options is {:?}",serde_json::to_string(&trace).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&outputs).unwrap(),serde_json::to_string(&options).unwrap());
+    // console_log!("trace is {:?}, inputs is{:?},outputs is {:?}.options is {:?}",serde_json::to_string(&trace).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&outputs).unwrap(),serde_json::to_string(&options).unwrap());
 
 
     // build LDE domain and LDE twiddles (for FFT evaluation over LDE domain)
     let lde_root = field::get_root_of_unity(trace.domain_size());
-    console_log!("lde_root is{:?}",lde_root);
+    // console_log!("lde_root is{:?}",lde_root);
 
-    console_log!("2 paras: lde_root is {:?},trace.domain_size() is {:?}",lde_root,trace.domain_size());
+    // console_log!("2 paras: lde_root is {:?},trace.domain_size() is {:?}",lde_root,trace.domain_size());
     let lde_domain = field::get_power_series(lde_root, trace.domain_size());
-    console_log!("lde_domain is{:?}",lde_domain);
+    // console_log!("lde_domain is{:?}",lde_domain);
 
     let lde_twiddles = twiddles_from_domain(&lde_domain);
-    console_log!("lde_twiddles is{:?}",lde_twiddles);
+    // console_log!("lde_twiddles is{:?}",lde_twiddles);
 
     // extend the execution trace registers to LDE domain
     trace.extend(&lde_twiddles);
@@ -127,10 +127,10 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     let (seed, pow_nonce) = utils::find_pow_nonce(seed, &options);
 
     // generate pseudo-random query positions
-    console_log!("seed is {:?},lde_domain.len is {:?}, options is {:?}",seed,lde_domain.len(),serde_json::to_string(&options).unwrap());
+    // console_log!("seed is {:?},lde_domain.len is {:?}, options is {:?}",seed,lde_domain.len(),serde_json::to_string(&options).unwrap());
 
     let positions = utils::compute_query_positions(&seed, lde_domain.len(), options);
-    console_log!("positions is {:?}",positions.clone());
+    // console_log!("positions is {:?}",positions.clone());
 
     debug!("Determined {} query positions from seed {}",
         positions.len(),

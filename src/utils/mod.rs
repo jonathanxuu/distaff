@@ -5,7 +5,7 @@ use sp_std::{ mem, slice, ops::Range, vec::Vec };
 pub mod hasher;
 pub mod sponge;
 use sp_std::vec;
-use wasm_bindgen_test::console_log;
+// use wasm_bindgen_test::console_log;
 
 // VECTOR FUNCTIONS
 // ================================================================================================
