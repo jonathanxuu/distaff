@@ -76,10 +76,12 @@ pub fn execute(program: &Program, inputs: &ProgramInputs, num_outputs: usize, op
 
     // generate STARK proof
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, options);
+    let proof_bytes = bincode::serialize(&proof).unwrap();
+
     let gen_output = GenOutput{
         stark_output: outputs,
         // stark_proof: proof_hex,
-        stark_proof: serde_json::to_string(&proof).unwrap(),
+        stark_proof: serde_json::to_string(&proof_bytes).unwrap(),
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
