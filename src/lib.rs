@@ -45,7 +45,7 @@ use crate::alloc::string::ToString;
 /// 
 /// * `inputs` specifies the initial stack state and provides secret input tapes;
 /// * `num_outputs` specifies the number of elements from the top of the stack to be returned;
-pub fn execute(program: &Program, inputs: &ProgramInputs, num_outputs: usize, options: &ProofOptions) -> (Vec<u128>, StarkProof)
+pub fn execute(program: &Program, inputs: &ProgramInputs, num_outputs: usize, options: &ProofOptions) -> String
 {
     assert!(num_outputs <= MAX_OUTPUTS, 
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);
@@ -76,8 +76,14 @@ pub fn execute(program: &Program, inputs: &ProgramInputs, num_outputs: usize, op
 
     // generate STARK proof
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, options);
+    let gen_output = GenOutput{
+        stark_output: outputs,
+        // stark_proof: proof_hex,
+        stark_proof: serde_json::to_string(&proof).unwrap(),
+    };
+    let res = serde_json::to_string(&gen_output).unwrap();
 
-    return (outputs, proof);
+    return res;
 }
 
 // VERIFIER

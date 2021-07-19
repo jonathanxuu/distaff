@@ -2,6 +2,8 @@ use std::{ env, io::Write, time::Instant };
 use distaff::{ self, StarkProof };
 mod examples;
 use examples::{ Example };
+mod stark;
+pub use stark::{ProofOptions, GenOutput, ProgramAssembly };
 
 
 fn main() {
@@ -37,7 +39,12 @@ fn main() {
     // execute the program and generate the proof of execution
     let now = Instant::now();
                 //         使用execute             //inputs 1,0   , 1     
-    let (outputs, proof) = distaff::execute(&program, &inputs, num_outputs, &options);
+    let res =distaff::execute(&program, &inputs, num_outputs, &options);
+    let res_struct_str = &res[..];
+    let res_struct: GenOutput = serde_json::from_str(res_struct_str).unwrap();
+    let outputs = res_struct.stark_output;
+    let proof = res_struct.stark_proof;
+
     println!("--------------------------------");
     println!("Executed program with hash {} in {} ms", 
         hex::encode(program.hash()),
