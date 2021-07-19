@@ -7,7 +7,7 @@ use rand::{Rng};
 
 use super::{ ProofOptions, MAX_CONSTRAINT_DEGREE };
 use sp_std::vec::Vec;
-// use wasm_bindgen_test::console_log;
+use wasm_bindgen_test::console_log;
 
 // RE-EXPORTS
 // ================================================================================================
@@ -32,7 +32,8 @@ pub fn get_incremental_trace_degree(trace_length: usize) -> usize {
 pub fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofOptions) -> Vec<usize> {
     let range = Uniform::from(0..domain_size);
     log::debug!(target:"starks-verifier","seeeeed is {:?}",seed);
-
+    println!("seeed is {:?},domainsize is {:?}",seed,domain_size);
+    console_log!("seeed is {:?},domainsize is {:?}",seed,domain_size);
 
     let mut index_iter = StdRng::from_seed(*seed).sample_iter(range);
     let num_queries = options.num_queries();
