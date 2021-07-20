@@ -26,20 +26,22 @@ pub fn get_incremental_trace_degree(trace_length: usize) -> usize {
 }
 
 pub fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofOptions) -> Vec<usize> {
-    let range = Uniform::from(0..domain_size);
-    console_log!("seeeeed is {:?}",seed);
+    // let seed = &[0u8;32];
+    let domain_size2 = domain_size as i32;
+    let range = Uniform::from(0..domain_size2);
+    console_log!("seeeeed11111 is {:?}",seed);
     let mut index_iter = StdRng::from_seed(*seed).sample_iter(range);
-    let num_queries = options.num_queries();
+    let num_queries = 50;
 
     let mut result = Vec::new();
     console_log!("range is {:?},index_iter is {:?},num_queries is {:?}.result is {:?}",range,index_iter,num_queries,result);
 
     for _ in 0..1000 {
-        let value = index_iter.next().unwrap();
+        let value = index_iter.next().unwrap() as usize;
         console_log!("value is {:?}",value);
 
         if value % options.extension_factor() == 0 { continue; }
-        console_log!("value is {:?},options .extension is {:?}",value, options.extension_factor());
+
 
         if result.contains(&value) { continue; }
         result.push(value);

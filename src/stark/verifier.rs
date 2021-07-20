@@ -6,7 +6,10 @@ use crate::{
 use super::{ StarkProof, TraceState, ConstraintEvaluator, CompositionCoefficients, fri, utils };
 use alloc::string::String;
 use sp_std::{vec, vec::Vec};
-
+use rand::prelude::*;
+use rand::distributions::Uniform;
+use wasm_bindgen_test::*;
+use crate::stark::{ ProofOptions };
 
 // VERIFIER FUNCTION
 // ================================================================================================
@@ -78,6 +81,37 @@ pub fn verify(program_hash: &[u8; 32], inputs: &[u128], outputs: &[u128], proof:
 
 // HELPER FUNCTIONS
 // ================================================================================================
+fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofOptions) -> Vec<usize> {
+    // let seed = &[0u8;32];
+    let domain_size2 = domain_size as i32;
+    let range = Uniform::from(0..domain_size2);
+    console_log!("seeeeed11111 is {:?}",seed);
+    let mut index_iter = StdRng::from_seed(*seed).sample_iter(range);
+    let num_queries = options.num_queries();
+
+    let mut result = Vec::new();
+    console_log!("range is {:?},index_iter is {:?},num_queries is {:?}.result is {:?}",range,index_iter,num_queries,result);
+
+    for _ in 0..1000 {
+        let value = index_iter.next().unwrap() as usize;
+        console_log!("value is {:?}",value);
+
+        if value % options.extension_factor() == 0 { continue; }
+
+
+        if result.contains(&value) { continue; }
+        result.push(value);
+        if result.len() >= num_queries { break; }
+    }
+    console_log!("result after for1000 is {:?},len is {:?}",result,result.len());
+
+    if result.len() < num_queries {
+        panic!("needed to generate {} query positions, but generated only {}", num_queries, result.len());
+    }
+
+    return result;
+}
+
 fn evaluate_constraints(evaluator: ConstraintEvaluator, state1: TraceState, state2: TraceState, x: u128) -> u128 {
     let (i_value, f_value) = evaluator.evaluate_boundaries(&state1, x);
     let t_value = evaluator.evaluate_transition_at(&state1, &state2, x);

@@ -6,7 +6,8 @@ use serde::{Serialize, Deserialize};
 #[macro_use]
 extern crate alloc;
 use alloc::string::String;
-
+use rand::prelude::*;
+use rand::distributions::Uniform;
 // RE-EXPORTS
 // ================================================================================================
 pub mod crypto;
@@ -57,7 +58,7 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     let options_slice: &str = &options_string[..];
     let options: ProofOptions = serde_json::from_str(options_slice).unwrap();
 
-    console_log!("program is {:?},inputs is {:?},num is {:?},options is {:?}",serde_json::to_string(&program).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&num_outputs).unwrap(),serde_json::to_string(&options).unwrap());
+    // console_log!("program is {:?},inputs is {:?},num is {:?},options is {:?}",serde_json::to_string(&program).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&num_outputs).unwrap(),serde_json::to_string(&options).unwrap());
 
     assert!(num_outputs <= MAX_OUTPUTS, 
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);
@@ -89,30 +90,27 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     // console_log!("outputssss = {:?}",outputs);
     console_log!("hash = {:?}",hex::encode(program.hash()));
     // generate STARK proof
-    console_log!("trace is {:?},inputs.public is {:?}. outoupts is {:?}. option is {:?}",serde_json::to_string(&trace).unwrap(),inputs.get_public_inputs(),outputs,serde_json::to_string(&options).unwrap());
+    // console_log!("trace is {:?},inuts.public is {:?}. outoupts is {:?}. option is {:?}",serde_json::to_string(&trace).unwrap(),inputs.get_public_inputs(),outputs,serde_json::to_string(&options).unwrap());
 
+    // console_log!("prooooooooof is {:?}",serde_json::to_string(&proof).unwrap());
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, &options);
-    console_log!("prooooooooof is {:?}",serde_json::to_string(&proof).unwrap());
+
     let proof_bytes = bincode::serialize(&proof).unwrap();
-    
-    match verifylib(program.hash(), inputs.get_public_inputs(), &outputs, &proof) {
-        Ok(_) => console_log!("okokok"),
-        Err(msg) => console_log!("Failed to verify execution: {}", msg)
-    }
-
-    console_log!("proof = {:?}",proof_bytes);
-
-    let proof_hex = hex::encode(&proof_bytes);
-
+    let proof_hex_res = hex::encode(&proof_bytes);
+    let suffix = String::from("/");
+    let proof_hex =  proof_hex_res + &suffix;
     let gen_output = GenOutput{
         stark_output: outputs,
-        // stark_proof: proof_hex,
-        stark_proof: serde_json::to_string(&proof).unwrap(),
+        stark_proof: proof_hex,
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
     return res;
 }
+
+
+
+
 
 pub fn verifylib(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128], proof: &StarkProof) -> Result<bool, String>
 {
@@ -165,14 +163,15 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
         "expected program hash {} does not match trace hash {}",
         hex::encode(program.hash()),
         hex::encode(program_hash));
-    console_log!("hash = {:?}",hex::encode(program.hash()));
+    // console_log!("hash = {:?}",hex::encode(program.hash()));
 
     // generate STARK proof
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, &options);
 
     let proof_bytes = bincode::serialize(&proof).unwrap();
-    let proof_hex = hex::encode(&proof_bytes);
-    
+    let proof_hex_res = hex::encode(&proof_bytes);
+    let suffix = String::from("\n");
+    let proof_hex =  proof_hex_res + &suffix;
     let gen_output = GenOutput{
         stark_output: outputs,
         stark_proof: proof_hex,
@@ -186,28 +185,27 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 pub fn generate_program( program_in_assembly: String ) -> String{
     let program :Program = assembly::compile(&program_in_assembly).unwrap();
     // let hash = program.hash();
-    let hash = program.hash();
-    let res1 = serde_json::to_string(&program).unwrap();
+    // let hash = program.hash();
+    // let res1 = serde_json::to_string(&program).unwrap();
     // let hash_id = String::from_utf8(res).unwrap();
-    let res2 = hex::encode(hash);
-    let res = ProgramAssembly{
-        AssemblyLanguage: res1,
-        programhash: res2,
-    };
-    let serialized = serde_json::to_string(&res).unwrap();
+    // let res2 = hex::encode(hash);
+    // let res = ProgramAssembly{
+        // AssemblyLanguage: res1,
+        // programhash: res2,
+    // };
+    let serialized = serde_json::to_string(&program).unwrap();
 
     return serialized;
 }
 
 #[wasm_bindgen]
-pub fn generate_program_alone( program_in_assembly: String ) -> String{
+pub fn generate_program_hash( program_in_assembly: String ) -> String{
     let program :Program = assembly::compile(&program_in_assembly).unwrap();
-    // let hash = program.hash();
-    // let hash_id = String::from_utf8(res).unwrap();
+    let hash = program.hash();
+    let prefix = String::from("0x");
+    let res = prefix +&hex::encode(hash);
 
-    let serialized = serde_json::to_string(&program).unwrap();
-
-    return serialized;
+    return res;
 }
 
 
@@ -221,28 +219,14 @@ pub fn output_program_string() -> String{
     return serialized;
 }
 
-#[wasm_bindgen]
-pub fn output_program_string_to_judge_contry() -> String{
-    let program = assembly::compile("
-    begin
-        push.20 read gt.128
-    end").unwrap();
-    let serialized = serde_json::to_string(&program).unwrap();
-    return serialized;
-}
-
-
-
-
 
 #[wasm_bindgen]
-pub fn output_inputs_string(secret_a: String) -> String{
+pub fn output_inputs_string(secret_a: String) -> String {
     let secret_a: Vec<&str> = secret_a.split(',').collect();
     let numbers_a: Vec<u128> = secret_a
         .iter()
         .map(|secret_a| secret_a.parse::<u128>().unwrap())
         .collect();
-
     let inputs = ProgramInputs::new(&[], &numbers_a, &[]);
     let serialized = serde_json::to_string(&inputs).unwrap();
     return serialized;

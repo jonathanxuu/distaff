@@ -9,7 +9,8 @@ use super::{
     constraints::{ ConstraintTable, ConstraintPoly },
     MAX_CONSTRAINT_DEGREE,
 };
-
+use rand::prelude::*;
+use rand::distributions::Uniform;
 use sp_std::vec::Vec;
 use wasm_bindgen_test::*;
 
@@ -130,6 +131,8 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     console_log!("seed is {:?},lde_domain.len is {:?}, options is {:?}",seed,lde_domain.len(),serde_json::to_string(&options).unwrap());
 
     let positions = utils::compute_query_positions(&seed, lde_domain.len(), options);
+    // let positions = self::compute_query_positions(&seed, lde_domain.len(), options);
+
     console_log!("positions is {:?}",positions.clone());
 
     debug!("Determined {} query positions from seed {}",
@@ -165,7 +168,35 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
 
     return proof;
 }
+fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofOptions) -> Vec<usize> {
+    // let seed = &[0u8;32];
 
+    let range = Uniform::from(0..domain_size);
+    console_log!("seeeeed1111 is {:?}",seed);
+    let mut index_iter = StdRng::from_seed(*seed).sample_iter(range);
+    let num_queries = options.num_queries();
+
+    let mut result = Vec::new();
+    console_log!("range is {:?},index_iter is {:?},num_queries is {:?}.result is {:?}",range,index_iter,num_queries,result);
+
+    for _ in 0..1000 {
+        let value = index_iter.next().unwrap();
+        console_log!("value is {:?}",value);
+
+        if value % options.extension_factor() == 0 { continue; }
+
+        if result.contains(&value) { continue; }
+        result.push(value);
+        if result.len() >= num_queries { break; }
+    }
+    console_log!("result after for1000 is {:?},len is {:?}",result,result.len());
+
+    if result.len() < num_queries {
+        panic!("needed to generate {} query positions, but generated only {}", num_queries, result.len());
+    }
+
+    return result;
+}
 // HELPER FUNCTIONS
 // ================================================================================================
 fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
