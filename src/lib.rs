@@ -2,6 +2,7 @@
 use log::debug;
 use sp_std::{ops::Range, vec, vec::Vec};
 use serde::{Serialize, Deserialize};
+use sha2::{Digest, Sha256};
 
 #[macro_use]
 extern crate alloc;
@@ -49,15 +50,42 @@ pub fn verify(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128],
 #[wasm_bindgen]
 pub fn starks_proofgen(program_string: String, inputs_string: String, num_outputs: usize, options_string: String) -> String
 {
+    console_log!("program is {:?}",program_string);
     let program_slice: &str = &program_string[..];
     let program: Program = serde_json::from_str(program_slice).unwrap();
 
+    
     let inputs_slice: &str = &inputs_string[..];
     let inputs: ProgramInputs = serde_json::from_str(inputs_slice).unwrap();
 
     let options_slice: &str = &options_string[..];
     let options: ProofOptions = serde_json::from_str(options_slice).unwrap();
 
+    let secret_input = inputs.get_secret_inputs();
+    let secret_inputa = &secret_input[0];
+    let mut secret_hash = String::new();
+    let Separator = String::from(",");
+    let mut k = 0;
+    for &i in secret_inputa{
+        let mut hasher = Sha256::new();
+        hasher.update(i.to_string().as_bytes());
+        let mut result = hasher.finalize();
+
+        let res = format!("{:x}", result);
+
+        let mut hasher2 = Sha256::new();
+        hasher2.update(res.as_bytes());
+        let mut result2 = hasher2.finalize();
+
+
+        secret_hash = secret_hash.clone() + &format!("{:x}", result2);
+        if k + 1 < secret_inputa.len(){
+            secret_hash = secret_hash.clone() + &Separator;
+            k = k + 1 ;
+        }else{
+            secret_hash = secret_hash.clone();
+        }
+    }
     // console_log!("program is {:?},inputs is {:?},num is {:?},options is {:?}",serde_json::to_string(&program).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&num_outputs).unwrap(),serde_json::to_string(&options).unwrap());
 
     assert!(num_outputs <= MAX_OUTPUTS, 
@@ -102,6 +130,8 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     let gen_output = GenOutput{
         stark_output: outputs,
         stark_proof: proof_hex,
+        secret_hash: secret_hash,
+
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
@@ -124,10 +154,9 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
     let mut program_string = String::from("Wrong program name");
 
     match &program_name as &str {
-        "number_over_20" => {program_string = output_program_string();},
+        "number_over_20" => {program_string = generate_program(String::from("begin push.20 read gt.128 end"));},
         _ => {panic!("Wrong program name!!")}
     }
-    
     let program_slice: &str = &program_string[..];
     let program: Program = serde_json::from_str(program_slice).unwrap();
 
@@ -136,6 +165,32 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
     let options_slice: &str = &options_string[..];
     let options = ProofOptions::default();
+
+    let secret_input = inputs.get_secret_inputs();
+    let secret_inputa = &secret_input[0];
+    let mut secret_hash = String::new();
+    let Separator = String::from(",");
+    let mut k = 0;
+    for &i in secret_inputa{
+        let mut hasher = Sha256::new();
+        hasher.update(i.to_string().as_bytes());
+        let mut result = hasher.finalize();
+
+        let res = format!("{:x}", result);
+
+        let mut hasher2 = Sha256::new();
+        hasher2.update(res.as_bytes());
+        let mut result2 = hasher2.finalize();
+
+
+        secret_hash = secret_hash.clone() + &format!("{:x}", result2);
+        if k + 1 < secret_inputa.len(){
+            secret_hash = secret_hash.clone() + &Separator;
+            k = k + 1 ;
+        }else{
+            secret_hash = secret_hash.clone();
+        }
+    }
 
     assert!(num_outputs <= MAX_OUTPUTS, 
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);
@@ -170,15 +225,18 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
     let proof_bytes = bincode::serialize(&proof).unwrap();
     let proof_hex_res = hex::encode(&proof_bytes);
-    let suffix = String::from("\n");
+    let suffix = String::from("/");
     let proof_hex =  proof_hex_res + &suffix;
     let gen_output = GenOutput{
         stark_output: outputs,
         stark_proof: proof_hex,
+        secret_hash: secret_hash,
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
     return res;
+
+
 }
 
 #[wasm_bindgen]
@@ -237,6 +295,16 @@ pub fn output_option_string() -> String{
     let options = ProofOptions::default();
     let serialized = serde_json::to_string(&options).unwrap();
     return serialized;
+
+}
+
+#[wasm_bindgen]
+pub fn hashtest(res: String) -> String
+{
+    let mut hasher = Sha256::new();
+    hasher.update(res.as_bytes());
+    let result = hasher.finalize();
+    return format!("{:x}",result);
 
 }
 
