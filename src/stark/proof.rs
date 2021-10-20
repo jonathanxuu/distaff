@@ -12,7 +12,7 @@ use alloc::string::String;
 pub struct GenOutput{
     pub stark_output: Vec<u128>,
     pub stark_proof: String,
-    pub secret_hash: String,
+    pub secret_hash: String
 }
 
 #[derive(Clone, Serialize, Deserialize)]

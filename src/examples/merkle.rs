@@ -54,7 +54,7 @@ fn generate_merkle_program(n: usize, index: usize) -> Program {
         pmpath.{}
     end
     ", n, index, n);
-
+    println!("generate_merkle_program is {:?}", source);
     return assembly::compile(&source).unwrap();
 }
 

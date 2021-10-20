@@ -19,35 +19,28 @@ use wasm_bindgen_test::*;
 
 pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options: &ProofOptions) -> StarkProof {
     // 1 ----- extend execution trace -------------------------------------------------------------
-
-    console_log!("trace is {:?}, inputs is{:?},outputs is {:?}.options is {:?}",serde_json::to_string(&trace).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&outputs).unwrap(),serde_json::to_string(&options).unwrap());
-
-
     // build LDE domain and LDE twiddles (for FFT evaluation over LDE domain)
     let lde_root = field::get_root_of_unity(trace.domain_size());
-    console_log!("lde_root is{:?}",lde_root);
 
-    console_log!("2 paras: lde_root is {:?},trace.domain_size() is {:?}",lde_root,trace.domain_size());
     let lde_domain = field::get_power_series(lde_root, trace.domain_size());
-    console_log!("lde_domain is{:?}",lde_domain);
 
     let lde_twiddles = twiddles_from_domain(&lde_domain);
-    console_log!("lde_twiddles is{:?}",lde_twiddles);
 
     // extend the execution trace registers to LDE domain
+
+    // console_log!("trace b4 extend is  {:?}",trace);
     trace.extend(&lde_twiddles);
+    // console_log!("trace after extend is  {:?}",trace);
+
     debug!("Extended execution trace from {} to {} steps",
         trace.unextended_length(),
         trace.domain_size());
 
-    // console_log!("trace before 2 is {:?}",serde_json::to_string(&trace).unwrap());
 
     // 2 ----- build Merkle tree from the extended execution trace ------------------------------------
     let trace_tree = trace.build_merkle_tree(options.hash_fn());
 
-
     // 3 ----- evaluate constraints ---------------------------------------------------------------
-    
     // initialize constraint evaluation table
     let mut constraints = ConstraintTable::new(&trace, trace_tree.root(), inputs, outputs);
 
@@ -169,8 +162,6 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     return proof;
 }
 fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofOptions) -> Vec<usize> {
-    // let seed = &[0u8;32];
-
     let range = Uniform::from(0..domain_size);
     console_log!("seeeeed1111 is {:?}",seed);
     let mut index_iter = StdRng::from_seed(*seed).sample_iter(range);
@@ -200,8 +191,12 @@ fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofO
 // HELPER FUNCTIONS
 // ================================================================================================
 fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
+    console_log!("the domain is {:?}",domain);
+
     let mut twiddles = domain[..(domain.len() / 2)].to_vec();
+    console_log!("twiddle is {:?}",twiddles);
     fft::permute(&mut twiddles);
+    console_log!("twiddle after is {:?}", twiddles);
     return twiddles;
 }
 

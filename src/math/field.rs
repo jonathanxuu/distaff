@@ -5,6 +5,8 @@ use rand::distributions::{ Distribution, Uniform };
 use crate::utils::{ uninit_vector };
 use sp_std::vec::Vec;
 use wasm_bindgen_test::console_log;
+use sha2::{Digest, Sha256};
+
 // CONSTANTS
 // ================================================================================================
 
@@ -250,6 +252,48 @@ pub fn get_power_series(b: u128, length: usize) -> Vec<u128> {
     // console_log!("aftfer for result is {:?}",result);
 
     return result;
+}
+
+pub fn sha256_a(x1: u128, x2:u128, y1:u128, y2:u128) -> u128 {
+    let x1 = format!("{:x}", x1);
+    let x2 = format!("{:x}", x2);
+    let y1= format!("{:x}", y1);
+    let y2 = format!("{:x}", y2);
+    let x3 = x1 + &x2;
+    let y3 = y1 + &y2;
+    let x4 :Vec<u8> = hex::decode(x3.clone()).unwrap();
+    let y4 :Vec<u8> = hex::decode(y3.clone()).unwrap();
+
+    let mut hasher = Sha256::new();
+    hasher.update(x4);
+    hasher.update(y4);
+    let mut result = hasher.finalize();
+
+    let whole = format!("{:x}", result.clone());
+    let head = &whole[0..32];
+    let i = u128::from_str_radix(head,16).unwrap();
+    return i;
+}
+pub fn sha256_b(x1: u128, x2:u128, y1:u128, y2:u128) -> u128 {
+    let x1 = format!("{:x}", x1);
+    let x2 = format!("{:x}", x2);
+    let y1= format!("{:x}", y1);
+    let y2 = format!("{:x}", y2);
+    let x3 = x1 + &x2;
+    let y3 = y1 + &y2;
+    let x4 :Vec<u8> = hex::decode(x3.clone()).unwrap();
+    let y4 :Vec<u8> = hex::decode(y3.clone()).unwrap();
+
+    let mut hasher = Sha256::new();
+    hasher.update(x4);
+    hasher.update(y4);
+    let mut result = hasher.finalize();
+
+
+    let whole = format!("{:x}", result.clone());
+    let head = &whole[32..];
+    let i = u128::from_str_radix(head,16).unwrap();
+    return i;
 }
 
 // RANDOMNESS

@@ -50,11 +50,10 @@ pub fn verify(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128],
 #[wasm_bindgen]
 pub fn starks_proofgen(program_string: String, inputs_string: String, num_outputs: usize, options_string: String) -> String
 {
-    console_log!("program is {:?}",program_string);
     let program_slice: &str = &program_string[..];
+    console_log!("program is {:?}",program_slice);
     let program: Program = serde_json::from_str(program_slice).unwrap();
 
-    
     let inputs_slice: &str = &inputs_string[..];
     let inputs: ProgramInputs = serde_json::from_str(inputs_slice).unwrap();
 
@@ -66,7 +65,7 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     let mut secret_hash = String::new();
     let Separator = String::from(",");
     let mut k = 0;
-    for &i in secret_inputa{
+    for &i in secret_inputa {
         let mut hasher = Sha256::new();
         hasher.update(i.to_string().as_bytes());
         let mut result = hasher.finalize();
@@ -86,6 +85,7 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
             secret_hash = secret_hash.clone();
         }
     }
+
     // console_log!("program is {:?},inputs is {:?},num is {:?},options is {:?}",serde_json::to_string(&program).unwrap(),serde_json::to_string(&inputs).unwrap(),serde_json::to_string(&num_outputs).unwrap(),serde_json::to_string(&options).unwrap());
 
     assert!(num_outputs <= MAX_OUTPUTS, 
@@ -93,7 +93,9 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
 
     // execute the program to create an execution trace
     let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
+    // console_log!("trace vecvec is {:?}",trace);
 
+    // console_log!("trace is {:?},ctx_depth is {:?}.loop_depth is {:?}",trace, ctx_depth,loop_depth);
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
     debug!("Generated execution trace of {} registers and {} steps",
         trace.register_count(),
@@ -125,21 +127,15 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
 
     let proof_bytes = bincode::serialize(&proof).unwrap();
     let proof_hex_res = hex::encode(&proof_bytes);
-    let suffix = String::from("/");
-    let proof_hex =  proof_hex_res + &suffix;
     let gen_output = GenOutput{
         stark_output: outputs,
-        stark_proof: proof_hex,
+        stark_proof: proof_hex_res,
         secret_hash: secret_hash,
-
     };
     let res = serde_json::to_string(&gen_output).unwrap();
 
     return res;
 }
-
-
-
 
 
 pub fn verifylib(program_hash: &[u8; 32], public_inputs: &[u128], outputs: &[u128], proof: &StarkProof) -> Result<bool, String>
@@ -182,7 +178,6 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
         hasher2.update(res.as_bytes());
         let mut result2 = hasher2.finalize();
 
-
         secret_hash = secret_hash.clone() + &format!("{:x}", result2);
         if k + 1 < secret_inputa.len(){
             secret_hash = secret_hash.clone() + &Separator;
@@ -197,6 +192,8 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
     // execute the program to create an execution trace
     let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
+    console_log!("trace vecvec is {:?}",trace);
+
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
     debug!("Generated execution trace of {} registers and {} steps",
         trace.register_count(),
@@ -225,11 +222,9 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
     let proof_bytes = bincode::serialize(&proof).unwrap();
     let proof_hex_res = hex::encode(&proof_bytes);
-    let suffix = String::from("/");
-    let proof_hex =  proof_hex_res + &suffix;
     let gen_output = GenOutput{
         stark_output: outputs,
-        stark_proof: proof_hex,
+        stark_proof: proof_hex_res,
         secret_hash: secret_hash,
     };
     let res = serde_json::to_string(&gen_output).unwrap();
@@ -242,17 +237,9 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 #[wasm_bindgen]
 pub fn generate_program( program_in_assembly: String ) -> String{
     let program :Program = assembly::compile(&program_in_assembly).unwrap();
-    // let hash = program.hash();
-    // let hash = program.hash();
-    // let res1 = serde_json::to_string(&program).unwrap();
-    // let hash_id = String::from_utf8(res).unwrap();
-    // let res2 = hex::encode(hash);
-    // let res = ProgramAssembly{
-        // AssemblyLanguage: res1,
-        // programhash: res2,
-    // };
-    let serialized = serde_json::to_string(&program).unwrap();
 
+    let serialized = serde_json::to_string(&program).unwrap();
+    
     return serialized;
 }
 
@@ -279,13 +266,35 @@ pub fn output_program_string() -> String{
 
 
 #[wasm_bindgen]
-pub fn output_inputs_string(secret_a: String) -> String {
-    let secret_a: Vec<&str> = secret_a.split(',').collect();
-    let numbers_a: Vec<u128> = secret_a
+pub fn output_inputs_string( public_a: String, secret_a: String, secret_b: String) -> String {
+    let mut public_aa = vec![];
+    let mut numbers_a = vec![];
+    let mut numbers_b = vec![];
+
+    if public_a.len() != 0{ 
+        let public_a: Vec<&str> = public_a.split(',').collect();
+        public_aa= public_a
+        .iter()
+        .map(|public_a| public_a.parse::<u128>().unwrap())
+        .collect();
+    };
+
+    if secret_a.len() != 0{
+        let secret_a: Vec<&str> = secret_a.split(',').collect();
+        numbers_a = secret_a
         .iter()
         .map(|secret_a| secret_a.parse::<u128>().unwrap())
         .collect();
-    let inputs = ProgramInputs::new(&[], &numbers_a, &[]);
+    };
+
+    if secret_b.len() != 0 {
+        let secret_b: Vec<&str> = secret_b.split(',').collect();
+         numbers_b = secret_b
+        .iter()
+        .map(|secret_b| secret_b.parse::<u128>().unwrap())
+        .collect(); 
+    };
+    let inputs = ProgramInputs::new(&public_aa, &numbers_a, &numbers_b);
     let serialized = serde_json::to_string(&inputs).unwrap();
     return serialized;
 }

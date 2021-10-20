@@ -83,10 +83,13 @@ pub enum UserOps {
     BinAcc      = 0b0_11_11101,         // no shift
     //???       = 0b0_11_11110,
 
+
     // high-degree operations
     Push        = 0b0_00_11111,         // right shift: 1
     Cmp         = 0b0_01_11111,         // no shift
     RescR       = 0b0_10_11111,         // no shift
+    Sha256      = 0b0_11_11110,
+
 
     // composite operations
     Begin       = 0b0_00_00000,         // no shift
@@ -164,7 +167,9 @@ impl sp_std::fmt::Display for UserOps {
             UserOps::Cmp        => write!(f, "cmp"),
             UserOps::BinAcc     => write!(f, "binacc"),
     
-            UserOps::RescR      => write!(f, "rescr")
+            UserOps::RescR      => write!(f, "rescr"),
+            UserOps::Sha256     => write!(f, "sha256")
+
         };
     }
 }

@@ -5,12 +5,14 @@ use crate::{
     HASH_STATE_WIDTH, MIN_STACK_DEPTH, MAX_STACK_DEPTH,
 };
 use sp_std::{vec, vec::Vec};
+use wasm_bindgen_test::*;
 
 #[cfg(test)]
 mod tests;
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug, Clone)]
 pub struct Stack {
     registers   : Vec<Vec<u128>>,
     tape_a      : Vec<u128>,
@@ -40,7 +42,7 @@ impl Stack {
             }
             registers.push(register);
         }
-
+            
         // reverse secret inputs so that they are consumed in FIFO order
         let [secret_inputs_a, secret_inputs_b] = inputs.get_secret_inputs();
         let mut tape_a = secret_inputs_a.clone();
@@ -109,6 +111,9 @@ impl Stack {
             OpCode::BinAcc      => self.op_binacc(op_hint),
 
             OpCode::RescR       => self.op_rescr(),
+            OpCode::Sha256      => self.op_sha256(),
+
+
         }
     }
 
@@ -144,6 +149,10 @@ impl Stack {
     /// Merges all register traces into a single vector of traces.
     pub fn into_register_traces(mut self) -> Vec<Vec<u128>> {
         self.registers.truncate(self.max_depth);
+        console_log!("max_depth is {:?}",self.max_depth);
+        console_log!("depth is {:?}",self.depth);
+
+
         return self.registers;
     }
 
@@ -334,6 +343,10 @@ impl Stack {
         self.registers[6][self.step] = self.registers[5][self.step - 1];
         self.registers[7][self.step] = self.registers[6][self.step - 1];
         self.copy_state(8);
+    }
+
+    fn op_btree(&mut self){
+
     }
 
     // SELECTION OPERATIONS
@@ -602,7 +615,24 @@ impl Stack {
 
         self.copy_state(HASH_STATE_WIDTH);
     }
+    fn op_sha256(&mut self) {
+        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+        let x1 = self.registers[0][self.step - 1];
+        let x2 = self.registers[1][self.step - 1];
 
+        let y1 = self.registers[2][self.step - 1];
+        let y2 = self.registers[3][self.step - 1];
+
+        self.registers[0][self.step] = field::sha256_a(y1, y2, x1, x2);
+        self.registers[1][self.step] = field::sha256_b(y1, y2, x1, x2);
+
+        // self.registers[0][self.step] = field::sha256_a(x1, x2, y1, y2);
+        // self.registers[1][self.step] = field::sha256_b(x1, x2, y1, y2);
+
+        // self.shift_left(2, 1);
+        self.copy_state(4);
+
+    }
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
 

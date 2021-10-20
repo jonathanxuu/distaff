@@ -4,6 +4,8 @@ use crate::{
     MIN_TRACE_LENGTH, HACC_NUM_ROUNDS,
 };
 use sp_std::vec::Vec;
+use wasm_bindgen_test::*;
+
 
 // RE-EXPORTS
 // ================================================================================================
@@ -25,10 +27,16 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
 {
     // initialize decoder and stack components
     let mut decoder = Decoder::new(MIN_TRACE_LENGTH);
+    console_log!("when new decoder is {:?}",decoder);
     let mut stack = Stack::new(inputs, MIN_TRACE_LENGTH);
+    console_log!("when new stack is {:?}",stack);
 
     // execute body of the program
     execute_blocks(program.root().body(), &mut decoder, &mut stack);
+    console_log!("After execute_blocks, decoder is {:?}",decoder);
+    console_log!("After execute blocks, stack is {:?}",stack);
+
+    
     close_block(&mut decoder, &mut stack, field::ZERO, true);
 
     // fill in remaining steps to make sure the length of the trace is a power of 2
@@ -41,8 +49,9 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
 
     // merge decoder and stack register traces into a single vector
     let mut register_traces = decoder.into_register_traces();
-    register_traces.append(&mut stack.into_register_traces());
-
+    register_traces.append(&mut stack.clone().into_register_traces());
+    console_log!("stack into trace = {:?}",stack.into_register_traces());
+    console_log!("stack after append is {:?}",register_traces.clone());
     return (register_traces, context_depth, loop_depth);
 }
 
@@ -54,7 +63,7 @@ fn execute_blocks(blocks: &[ProgramBlock], decoder: &mut Decoder, stack: &mut St
 
     match &blocks[0] {
         ProgramBlock::Span(block) => {
-
+        
             execute_span(block, decoder, stack, true)
         
         },

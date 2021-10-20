@@ -13,6 +13,7 @@ mod tests;
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug, Clone)]
 pub struct Decoder {
 
     step        : usize,

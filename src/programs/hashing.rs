@@ -43,7 +43,7 @@ pub fn hash_seq(blocks: &Vec<ProgramBlock>, suffix: &[u8], suffix_offset: usize)
                     ProgramBlock::Loop(block)   => block.get_hash(),
                     ProgramBlock::Span(_)       => (0, 0),  // can't happen
                 };
-
+                
                 // then, merge the hash with the state using acc_hash procedure
                 state = hash_acc(state[0], v0, v1);
             }
