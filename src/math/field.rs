@@ -1,3 +1,5 @@
+
+use alloc::string::String;
 use sp_std::ops::Range;
 use sp_std::convert::TryInto;
 use rand::prelude::*;
@@ -6,7 +8,9 @@ use crate::utils::{ uninit_vector };
 use sp_std::vec::Vec;
 use wasm_bindgen_test::console_log;
 use sha2::{Digest, Sha256};
-
+use crypto::hashes::{
+    blake2b::Blake2b256
+};
 // CONSTANTS
 // ================================================================================================
 
@@ -296,6 +300,137 @@ pub fn sha256_b(x1: u128, x2:u128, y1:u128, y2:u128) -> u128 {
     return i;
 }
 
+pub fn blake_a(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+    let zero = String::from("0");
+
+    let mut x1 = format!("{:x}", x1);
+    let mut x2 = format!("{:x}", x2);
+    let mut x3 = format!("{:x}", x3);
+    let mut x4 = format!("{:x}", x4);    
+    let mut x5 = format!("{:x}", x5);
+    if x1.len() % 2 !=0{
+        x1 = zero.clone() + &x1;
+    };
+    while x1.len() < 8{
+        x1 = zero.clone() + &x1;
+    }
+    if x2.len() % 2 !=0{
+        x2 = zero.clone() + &x2;
+    };
+    while x1.len() < 4{
+        x2 = zero.clone() + &x2;
+    }
+    if x3.len() % 2 !=0{
+        x3 = zero.clone() + &x3;
+    };
+    while x3.len() < 4{
+        x3 = zero.clone() + &x3;
+    }
+    if x4.len() % 2 !=0{
+        x4 = zero.clone() + &x4;
+    };    
+    while x4.len() < 4{
+        x4 = zero.clone() + &x4;
+    }
+    if x5.len() % 2 !=0{
+        x5 = zero.clone() + &x5;
+    };
+    while x5.len() < 12{
+        x5 = zero.clone() + &x5;
+    }
+    
+
+    let hyphen = String::from('-');
+    let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+    console_log!("hi im in blake2b nonce  is {:?}",nonce);
+
+    let y0 = String::from("0x");
+    let mut y1= format!("{:x}", y1);
+    let mut y2 = format!("{:x}", y2);
+    let mut i1 = 32 - y1.len();
+    while i1 > 0{
+        y1 = zero.clone() + &y1;
+        i1 -=1;
+    } 
+    let mut i2 = 32 - y2.len();
+    while i2 > 0{
+        y2 = zero.clone() + &y2;
+        i2 -=1;
+    } 
+    
+    let hash_before = y0 + &y1 + &y2;
+    let hash = nonce+ &hash_before;
+    let hasher = Blake2b256::digest(hash.as_bytes());
+    let whole = format!("{:x}", hasher.clone());
+    let head = &whole[0..32];
+    let i = u128::from_str_radix(head,16).unwrap();
+    return i;
+}
+pub fn blake_b(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+    let zero = String::from("0");
+
+    let mut x1 = format!("{:x}", x1);
+    let mut x2 = format!("{:x}", x2);
+    let mut x3 = format!("{:x}", x3);
+    let mut x4 = format!("{:x}", x4);    
+    let mut x5 = format!("{:x}", x5);
+    if x1.len() % 2 !=0{
+        x1 = zero.clone() + &x1;
+    };
+    while x1.len() < 8{
+        x1 = zero.clone() + &x1;
+    }
+    if x2.len() % 2 !=0{
+        x2 = zero.clone() + &x2;
+    };
+    while x1.len() < 4{
+        x2 = zero.clone() + &x2;
+    }
+    if x3.len() % 2 !=0{
+        x3 = zero.clone() + &x3;
+    };
+    while x3.len() < 4{
+        x3 = zero.clone() + &x3;
+    }
+    if x4.len() % 2 !=0{
+        x4 = zero.clone() + &x4;
+    };    
+    while x4.len() < 4{
+        x4 = zero.clone() + &x4;
+    }
+    if x5.len() % 2 !=0{
+        x5 = zero.clone() + &x5;
+    };
+    while x5.len() < 12{
+        x5 = zero.clone() + &x5;
+    }
+    
+    let hyphen = String::from('-');
+    let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+    console_log!("hi im in blake2b nonce  is {:?}",nonce);
+
+    let y0 = String::from("0x");
+    let mut y1= format!("{:x}", y1);
+    let mut y2 = format!("{:x}", y2);
+    let mut i1 = 32 - y1.len();
+    while i1 > 0{
+        y1 = zero.clone() + &y1;
+        i1 -=1;
+    } 
+    let mut i2 = 32 - y2.len();
+    while i2 > 0{
+        y2 = zero.clone() + &y2;
+        i2 -=1;
+    } 
+    
+    let hash_before = y0 + &y1 + &y2;
+    let hash = nonce+ &hash_before;
+    let hasher = Blake2b256::digest(hash.as_bytes());
+    let whole = format!("{:x}", hasher.clone());
+    let head = &whole[32..];
+    let i = u128::from_str_radix(head,16).unwrap();
+    return i;
+}
 // RANDOMNESS
 // --------------------------------------------------------------------------------------------
 

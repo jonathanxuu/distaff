@@ -240,6 +240,7 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
         "smpath" => parse_smpath(op_codes, &op, step),
         "pmpath" => parse_pmpath(op_codes, op_hints, &op, step),
         "rmerkle" => parse_rmerkle(op_codes, &op, step),
+        "blake2b" => parse_blake2b(op_codes, &op, step),
 
         
         _ => return Err(AssemblyError::invalid_op(&op, step))

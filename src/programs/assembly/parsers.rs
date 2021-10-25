@@ -465,6 +465,24 @@ pub fn parse_hash(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result
     return Ok(true);
 }
 
+pub fn parse_blake2b(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
+    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
+
+    program.extend_from_slice(&[
+        // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::Sha256,
+        // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::CSwap2, OpCode::Pad2
+        OpCode::Blake2b
+
+    ]);
+
+    // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16
+    let alignment = program.len() % HASH_OP_ALIGNMENT;
+    let pad_length = (HASH_OP_ALIGNMENT - alignment) % HASH_OP_ALIGNMENT;
+    program.resize(program.len() + pad_length, OpCode::Noop);
+
+    return Ok(true);
+}
+
 /// Appends a sequence of operations to the program to compute the root of Merkle authentication
 /// path for a tree of depth n. Leaf index is expected to be provided via input tapes A and B.
 pub fn parse_smpath(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
@@ -572,9 +590,6 @@ pub fn parse_rmerkle(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Res
     for _ in 0..(n - 2) {
         program.extend_from_slice(&SUB_CYCLE);
     }
-
-
-
     return Ok(true);
 }
 
