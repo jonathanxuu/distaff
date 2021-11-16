@@ -10,6 +10,7 @@ use errors::{ AssemblyError };
 
 #[cfg(test)]
 mod tests;
+use wasm_bindgen_test::*;
 
 type HintMap = HashMap<usize, OpHint>;
 
@@ -21,6 +22,8 @@ pub fn compile(source: &str) -> Result<Program, AssemblyError> {
 
     // break assembly string into tokens
     let tokens: Vec<&str> = source.split_whitespace().collect();
+    // 将program按空格分开
+    console_log!("tokens is {:?}",tokens);
 
     // perform basic validation
     if tokens.len() == 0 {
@@ -35,8 +38,17 @@ pub fn compile(source: &str) -> Result<Program, AssemblyError> {
 
     // read the program from the token stream
     let mut root_blocks = Vec::new();
+    console_log!("root_blocks is {:?}",serde_json::to_string(&root_blocks).unwrap());
+
+
     let i = parse_branch(&mut root_blocks, &tokens, 0)?;
+   
+    console_log!("i = {:?}",i);
+    console_log!("root_blocks is {:?}",serde_json::to_string(&root_blocks).unwrap());
+   
     let root = Group::new(root_blocks);
+    
+    console_log!("root is {:?}",serde_json::to_string(&root).unwrap());
 
     // make sure there is nothing left after the last token
     if i < tokens.len() - 1 {
@@ -53,9 +65,10 @@ pub fn compile(source: &str) -> Result<Program, AssemblyError> {
 /// Parses a single program block from the `token` stream, and appends this block to the `parent`
 /// list of blocks.
 fn parse_block(parent: &mut Vec<ProgramBlock>, tokens: &[&str], mut i: usize) -> Result<usize, AssemblyError> {
-
+    console_log!("im in parse_block,parent is {:?},tokens is {:?}, i is {:?}",parent, tokens,i);
     // read the block header
     let head: Vec<&str> = tokens[i].split(".").collect();
+    console_log!("im in parse_block, head is {:?}",head);
 
     // based on the block header, figure out what type of a block we are dealing with
     match head[0] {
@@ -138,6 +151,8 @@ fn parse_branch(body: &mut Vec<ProgramBlock>, tokens: &[&str], mut i: usize) -> 
 
     // determine starting instructions of the branch based on branch head
     let mut head: Vec<&str> = tokens[i].split(".").collect();
+    console_log!("im in parse_branch head is {:?}",head);
+
     let mut op_codes: Vec<OpCode> = match head[0] {
         "begin"  => {
             // this is a first block of a program
@@ -161,10 +176,16 @@ fn parse_branch(body: &mut Vec<ProgramBlock>, tokens: &[&str], mut i: usize) -> 
     // if a new block is encountered, parse it recursively
     while i < tokens.len() {
         let op: Vec<&str> = tokens[i].split(".").collect();
+        console_log!("im in parse_branch op is {:?},going to do match op[0]",op);
+
         i = match op[0] {
             "block" | "if" | "repeat" | "while" => {
+
                 let force_span = body.len() == 0;
+                console_log!("im in parse_branch if, body is {:?}, op_codes is {:?}. op_hints is {:?}, force_span is {:?}",body, op_codes,op_hints,force_span);
                 add_span(body, &mut op_codes, &mut op_hints, force_span);
+                console_log!("im in parse_branch if, body is {:?}, op_codes is {:?}. op_hints is {:?}, force_span is {:?}",body, op_codes,op_hints,force_span);
+
                 parse_block(body, tokens, i)?
             },
             "else" => {
@@ -184,11 +205,15 @@ fn parse_branch(body: &mut Vec<ProgramBlock>, tokens: &[&str], mut i: usize) -> 
                 add_span(body, &mut op_codes, &mut op_hints, false);
                 return Ok(i);
             },
-            _ => parse_op_token(op, &mut op_codes, &mut op_hints, i)?
+            _ => {            console_log!("going to do parse_op_token, op is {:?}, op_codes is{:?}, op_hints is {:?},i is {:?}",op,op_codes,op_hints,i);
+            parse_op_token(op, &mut op_codes, &mut op_hints, i)?
+            
+        }
         };
     }
 
     // if all tokens were consumed by block end was not found, return an error
+    console_log!("im in parse_branch head[0] is {:?},going to do match head[0]",head);
     return match head[0] {
         "block"  => Err(AssemblyError::unmatched_block(first_step)),
         "if"     => Err(AssemblyError::unmatched_if(first_step)),
@@ -239,13 +264,13 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
         "hash"   => parse_hash(op_codes, &op, step),
         "smpath" => parse_smpath(op_codes, &op, step),
         "pmpath" => parse_pmpath(op_codes, op_hints, &op, step),
-        "rmerkle" => parse_rmerkle(op_codes, &op, step),
+        // "rmerkle" => parse_rmerkle(op_codes, &op, step),
         "blake2b" => parse_blake2b(op_codes, &op, step),
-
+        "khash" => parse_khash(op_codes, &op, step),
         
         _ => return Err(AssemblyError::invalid_op(&op, step))
     }?;
-
+    console_log!("after do parse_op_token, op is {:?}, op_codes is{:?}, op_hints is {:?},i is {:?}",op,op_codes,op_hints,step+1);
     // advance instruction pointer to the next step
     return Ok(step + 1);
 }
@@ -255,9 +280,10 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
 
 /// Adds a new Span block to a program block body based on currently parsed instructions.
 fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: &mut HintMap, force: bool) {
-
     // if there were no instructions in the current span, don't do anything
+    console_log!("im in add_span1");
     if op_codes.len() == 0 && !force { return };
+    console_log!("im in add_span2");
 
     // pad the instructions to make ensure 16-cycle alignment
     let mut span_op_codes = op_codes.clone();
@@ -265,7 +291,9 @@ fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: 
     span_op_codes.resize(span_op_codes.len() + pad_length, OpCode::Noop);
 
     // add a new Span block to the body
+    console_log!("im in add_span3， body is {:?}",body);
     body.push(ProgramBlock::Span(Span::new(span_op_codes, op_hints.clone())));
+    console_log!("im in add_span4， body is {:?}",body);
 
     // clear op_codes and op_hints for the next Span block
     op_codes.clear();

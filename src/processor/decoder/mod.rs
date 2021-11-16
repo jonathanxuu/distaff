@@ -7,6 +7,7 @@ use crate::{
 };
 use super::opcodes::{ FlowOps, UserOps };
 use sp_std::{vec, vec::Vec};
+use wasm_bindgen_test::*;
 
 #[cfg(test)]
 mod tests;
@@ -282,7 +283,7 @@ impl Decoder {
         // make sure there is enough memory allocated for register traces
         if self.step >= self.trace_length() {
             let new_length = self.trace_length() * 2;
-
+        
             self.op_counter.resize(new_length, field::ZERO);
             for register in self.sponge_trace.iter_mut() { register.resize(new_length, field::ZERO); }
             for register in self.cf_op_bits.iter_mut()   { register.resize(new_length, field::ZERO); }
@@ -299,6 +300,7 @@ impl Decoder {
         else {
             self.op_counter[self.step] = self.op_counter[self.step - 1];
         }
+
     }
     
     /// Populates all bits registers based on the opcodes for control flow and user operations.
@@ -368,6 +370,7 @@ impl Decoder {
         for i in 0..self.ctx_stack.len() {
             self.ctx_stack[i][self.step] = self.ctx_stack[i][self.step - 1];
         }
+
     }
 
     // LOOP STACK HELPERS

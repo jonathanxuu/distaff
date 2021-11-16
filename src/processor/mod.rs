@@ -63,7 +63,7 @@ fn execute_blocks(blocks: &[ProgramBlock], decoder: &mut Decoder, stack: &mut St
 
     match &blocks[0] {
         ProgramBlock::Span(block) => {
-        
+            console_log!("Span is {:?}", block);
             execute_span(block, decoder, stack, true)
         
         },
@@ -122,6 +122,7 @@ fn execute_span(block: &Span, decoder: &mut Decoder, stack: &mut Stack, is_first
         stack.execute(OpCode::Noop, OpHint::None);
     }
 
+    console_log!("im in execute_span block is {:?}",block);
     // execute all other instructions in the block
     for i in 0..block.length() {
         let (op_code, op_hint) = block.get_op(i);

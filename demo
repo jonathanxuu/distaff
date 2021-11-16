@@ -1,0 +1,34 @@
+begin
+	push.20 read.a lt.128
+	if.true
+		pad.3
+	else		
+	    read.ab push.1 
+        repeat.5 
+            if.true 
+                repeat.5 
+                    read.a 
+                end read.ab blake2b read.ab pick.2 pick.2 roll.4 eq 
+                if.true 
+                    eq 
+                else 
+                    pad.2
+                end 
+            else 
+                pad.1
+            end 
+        end
+        if.true
+            khash swap.1 roll.4 pick.1 eq
+                if.true
+                    dup.1 swap.2 pick.1 eq
+                else
+                    pad.2 push.1
+                end 
+        else 
+            pad.2 push.1
+        end
+	end
+end
+
+begin push.20 read.a lt.128 if.true	pad.1 else read.ab push.1 repeat.5 if.true repeat.5 read.a end read.ab blake2b read.ab pick.2 pick.2 roll.4 eq if.true eq else pad.2 end else pad.1 end end  end end

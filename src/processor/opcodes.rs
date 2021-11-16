@@ -88,7 +88,8 @@ pub enum UserOps {
     Push        = 0b0_00_11111,         // right shift: 1
     Cmp         = 0b0_01_11111,         // no shift
     RescR       = 0b0_10_11111,         // no shift
-    Sha256     = 0b0_11_10110,
+    // Sha256     = 0b0_11_10110,
+    Khash       = 0b0_11_10110,
     Blake2b      = 0b0_11_11110,
 // 
     // composite operations
@@ -169,7 +170,7 @@ impl sp_std::fmt::Display for UserOps {
     
             UserOps::RescR      => write!(f, "rescr"),
             UserOps::Blake2b    => write!(f, "blake2b"),
-            UserOps::Sha256     => write!(f, "sha256")
+            UserOps::Khash     => write!(f, "khash")
 
         };
     }

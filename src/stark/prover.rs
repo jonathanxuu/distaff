@@ -28,9 +28,7 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
 
     // extend the execution trace registers to LDE domain
 
-    // console_log!("trace b4 extend is  {:?}",trace);
     trace.extend(&lde_twiddles);
-    // console_log!("trace after extend is  {:?}",trace);
 
     debug!("Extended execution trace from {} to {} steps",
         trace.unextended_length(),
@@ -191,11 +189,13 @@ fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofO
 // HELPER FUNCTIONS
 // ================================================================================================
 fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
-    console_log!("the domain is {:?}",domain);
+    console_log!("the domain is {:?},domain len is {:?}",domain,domain.len());
 
     let mut twiddles = domain[..(domain.len() / 2)].to_vec();
-    console_log!("twiddle is {:?}",twiddles);
-    fft::permute(&mut twiddles);
+    console_log!("twiddle is {:?}, twiddle len is {:?}",twiddles,twiddles.len());
+    // 截取domain的前半段（4096），然后进行快速傅立叶变换，获得长度为4096的twiddles
+    fft::permute(&mut twiddles);    
+    // 这里进行快速傅立叶变换 
     console_log!("twiddle after is {:?}", twiddles);
     return twiddles;
 }

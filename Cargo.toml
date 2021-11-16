@@ -34,7 +34,7 @@ wasm-bindgen-test = "0.3.24"
 env_logger = "0.7.1"
 merkle = {git = "https://github.com/SpinResearch/merkle.rs", default-features = false}
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["blake2b"]}
-
+b2sum-rs = {path = "b2sum-rs", default-features = false}
 [dev-dependencies]
 criterion = "0.3.3"
 num-bigint = "0.3.0"

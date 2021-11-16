@@ -236,6 +236,8 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
 #[wasm_bindgen]
 pub fn generate_program( program_in_assembly: String ) -> String{
+    console_log!("origin program is {:?}",program_in_assembly);
+
     let program :Program = assembly::compile(&program_in_assembly).unwrap();
 
     let serialized = serde_json::to_string(&program).unwrap();
