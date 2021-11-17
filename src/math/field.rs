@@ -1,5 +1,5 @@
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use sp_std::ops::Range;
 use sp_std::convert::TryInto;
 use rand::prelude::*;
@@ -302,23 +302,185 @@ pub fn get_power_series(b: u128, length: usize) -> Vec<u128> {
 //     return i;
 // }
 
-pub fn blake_a(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+// pub fn blake_a(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+//     let zero = String::from("0");
+
+//     let mut x1 = format!("{:x}", x1);
+//     let mut x2 = format!("{:x}", x2);
+//     let mut x3 = format!("{:x}", x3);
+//     let mut x4 = format!("{:x}", x4);    
+//     let mut x5 = format!("{:x}", x5);
+//     if x1.len() % 2 !=0{
+//         x1 = zero.clone() + &x1;
+//     };
+//     while x1.len() < 8{
+//         x1 = zero.clone() + &x1;
+//     }
+//     if x2.len() % 2 !=0{
+//         x2 = zero.clone() + &x2;
+//     };
+//     while x2.len() < 4{
+//         x2 = zero.clone() + &x2;
+//     }
+//     if x3.len() % 2 !=0{
+//         x3 = zero.clone() + &x3;
+//     };
+//     while x3.len() < 4{
+//         x3 = zero.clone() + &x3;
+//     }
+//     if x4.len() % 2 !=0{
+//         x4 = zero.clone() + &x4;
+//     };    
+//     while x4.len() < 4{
+//         x4 = zero.clone() + &x4;
+//     }
+//     if x5.len() % 2 !=0{
+//         x5 = zero.clone() + &x5;
+//     };
+//     while x5.len() < 12{
+//         x5 = zero.clone() + &x5;
+//     }
+    
+
+//     let hyphen = String::from('-');
+//     let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+//     console_log!("hi im in blake2b nonce  is {:?}",nonce);
+
+//     let y0 = String::from("0x");
+//     let mut y1= format!("{:x}", y1);
+//     let mut y2 = format!("{:x}", y2);
+//     let mut i1 = 32 - y1.len();
+//     while i1 > 0{
+//         y1 = zero.clone() + &y1;
+//         i1 -=1;
+//     } 
+//     let mut i2 = 32 - y2.len();
+//     while i2 > 0{
+//         y2 = zero.clone() + &y2;
+//         i2 -=1;
+//     } 
+    
+//     let hash_before = y0 + &y1 + &y2;
+//     let hash = nonce+ &hash_before;
+//     let hasher = Blake2b256::digest(hash.as_bytes());
+//     let whole = format!("{:x}", hasher.clone());
+//     let head = &whole[0..32];
+//     let i = u128::from_str_radix(head,16).unwrap();
+//     return i;
+// }
+// pub fn blake_b(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+//     let zero = String::from("0");
+
+//     let mut x1 = format!("{:x}", x1);
+//     let mut x2 = format!("{:x}", x2);
+//     let mut x3 = format!("{:x}", x3);
+//     let mut x4 = format!("{:x}", x4);    
+//     let mut x5 = format!("{:x}", x5);
+//     if x1.len() % 2 !=0{
+//         x1 = zero.clone() + &x1;
+//     };
+//     while x1.len() < 8{
+//         x1 = zero.clone() + &x1;
+//     }
+//     if x2.len() % 2 !=0{
+//         x2 = zero.clone() + &x2;
+//     };
+//     while x2.len() < 4{
+//         x2 = zero.clone() + &x2;
+//     }
+//     if x3.len() % 2 !=0{
+//         x3 = zero.clone() + &x3;
+//     };
+//     while x3.len() < 4{
+//         x3 = zero.clone() + &x3;
+//     }
+//     if x4.len() % 2 !=0{
+//         x4 = zero.clone() + &x4;
+//     };    
+//     while x4.len() < 4{
+//         x4 = zero.clone() + &x4;
+//     }
+//     if x5.len() % 2 !=0{
+//         x5 = zero.clone() + &x5;
+//     };
+//     while x5.len() < 12{
+//         x5 = zero.clone() + &x5;
+//     }
+    
+//     let hyphen = String::from('-');
+//     let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+//     console_log!("hi im in blake2b nonce  is {:?}",nonce);
+
+//     let y0 = String::from("0x");
+//     let mut y1= format!("{:x}", y1);
+//     let mut y2 = format!("{:x}", y2);
+//     let mut i1 = 32 - y1.len();
+//     while i1 > 0{
+//         y1 = zero.clone() + &y1;
+//         i1 -=1;
+//     } 
+//     let mut i2 = 32 - y2.len();
+//     while i2 > 0{
+//         y2 = zero.clone() + &y2;
+//         i2 -=1;
+//     } 
+    
+//     let hash_before = y0 + &y1 + &y2;
+//     let hash = nonce+ &hash_before;
+//     let hasher = Blake2b256::digest(hash.as_bytes());
+//     let whole = format!("{:x}", hasher.clone());
+//     let head = &whole[32..];
+//     let i = u128::from_str_radix(head,16).unwrap();
+//     return i;
+// }
+
+pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype_1:u128, ctype_2:u128, ascii:u128) -> u128{
+    let prefix = String::from("{\"kilt:ctype:");
+    let joint_1 = String::from('#');
+    let joint_2 = String::from("\":");
+    let suffice = String::from('}');
+
     let zero = String::from("0");
+    let mut ctype_1= format!("{:x}", ctype_1);
+    let mut i1 = 32 - ctype_1.len();
+    while i1 > 0 {
+        ctype_1 = zero.clone() + &ctype_1;
+        i1 -=1;
+    } 
+    let mut ctype_2 = format!("{:x}", ctype_2);
+    let mut i2 = 32 - ctype_2.len();
+    while i2 > 0 {
+        ctype_2 = zero.clone() + &ctype_2;
+        i2 -=1;
+    } 
+    let y0 = String::from("0x");
+
+    let ctype_hash = y0+ &ctype_1 + &ctype_2;  
+
+    let ascii_string= ascii.to_string();
+    
+    let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
+    let ascii_final = String::from_utf8(ascii_vec).unwrap();
+    let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
     let mut x2 = format!("{:x}", x2);
     let mut x3 = format!("{:x}", x3);
     let mut x4 = format!("{:x}", x4);    
     let mut x5 = format!("{:x}", x5);
+    let y0 = String::from("0x");
+
     if x1.len() % 2 !=0{
-        x1 = zero.clone() + &x1;
+            x1 = zero.clone() + &x1;
     };
     while x1.len() < 8{
         x1 = zero.clone() + &x1;
     }
+
     if x2.len() % 2 !=0{
         x2 = zero.clone() + &x2;
     };
+
     while x2.len() < 4{
         x2 = zero.clone() + &x2;
     }
@@ -340,51 +502,76 @@ pub fn blake_a(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) 
     while x5.len() < 12{
         x5 = zero.clone() + &x5;
     }
-    
+    // println!("nonce is {:?},{:?},{:?},{:?},{:?}",x1,x2,x3,x4,x5);
 
     let hyphen = String::from('-');
-    let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
-    console_log!("hi im in blake2b nonce  is {:?}",nonce);
+    let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
 
-    let y0 = String::from("0x");
-    let mut y1= format!("{:x}", y1);
-    let mut y2 = format!("{:x}", y2);
-    let mut i1 = 32 - y1.len();
-    while i1 > 0{
-        y1 = zero.clone() + &y1;
-        i1 -=1;
-    } 
-    let mut i2 = 32 - y2.len();
-    while i2 > 0{
-        y2 = zero.clone() + &y2;
-        i2 -=1;
-    } 
-    
-    let hash_before = y0 + &y1 + &y2;
-    let hash = nonce+ &hash_before;
-    let hasher = Blake2b256::digest(hash.as_bytes());
-    let whole = format!("{:x}", hasher.clone());
+
+    let mut hasher = Blake2b256::digest(origin_string.as_bytes());
+    let mut whole = format!("{:x}", hasher.clone());
+    console_log!("content_hash is {:?}",whole);
+
+    let go_to_hash = y4 + &y0 + &whole;
+    let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
+    let mut whole = format!("{:x}", hasher.clone());
+
     let head = &whole[0..32];
+    let rear = &whole[32..];
+
     let i = u128::from_str_radix(head,16).unwrap();
-    return i;
+    // let i2 = u128::from_str_radix(rear,16).unwrap();
+
+    return i;    
 }
-pub fn blake_b(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) -> u128 {
+
+pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype_1:u128, ctype_2:u128, ascii:u128) -> u128{
+    let prefix = String::from("{\"kilt:ctype:");
+    let joint_1 = String::from('#');
+    let joint_2 = String::from("\":");
+    let suffice = String::from('}');
+
     let zero = String::from("0");
+    let mut ctype_1= format!("{:x}", ctype_1);
+    let mut i1 = 32 - ctype_1.len();
+    while i1 > 0 {
+        ctype_1 = zero.clone() + &ctype_1;
+        i1 -=1;
+    } 
+    let mut ctype_2 = format!("{:x}", ctype_2);
+    let mut i2 = 32 - ctype_2.len();
+    while i2 > 0 {
+        ctype_2 = zero.clone() + &ctype_2;
+        i2 -=1;
+    } 
+    let y0 = String::from("0x");
+
+    let ctype_hash = y0+ &ctype_1 + &ctype_2;  
+
+    let ascii_string= ascii.to_string();
+    
+    let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
+    let ascii_final = String::from_utf8(ascii_vec).unwrap();
+    let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
     let mut x2 = format!("{:x}", x2);
     let mut x3 = format!("{:x}", x3);
     let mut x4 = format!("{:x}", x4);    
     let mut x5 = format!("{:x}", x5);
+    let y0 = String::from("0x");
+
     if x1.len() % 2 !=0{
-        x1 = zero.clone() + &x1;
+            x1 = zero.clone() + &x1;
     };
     while x1.len() < 8{
         x1 = zero.clone() + &x1;
     }
+
     if x2.len() % 2 !=0{
         x2 = zero.clone() + &x2;
     };
+
     while x2.len() < 4{
         x2 = zero.clone() + &x2;
     }
@@ -406,36 +593,30 @@ pub fn blake_b(x1: u128, x2:u128, x3: u128, x4:u128,x5: u128, y1:u128, y2:u128) 
     while x5.len() < 12{
         x5 = zero.clone() + &x5;
     }
-    
-    let hyphen = String::from('-');
-    let nonce = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
-    console_log!("hi im in blake2b nonce  is {:?}",nonce);
+    // println!("nonce is {:?},{:?},{:?},{:?},{:?}",x1,x2,x3,x4,x5);
 
-    let y0 = String::from("0x");
-    let mut y1= format!("{:x}", y1);
-    let mut y2 = format!("{:x}", y2);
-    let mut i1 = 32 - y1.len();
-    while i1 > 0{
-        y1 = zero.clone() + &y1;
-        i1 -=1;
-    } 
-    let mut i2 = 32 - y2.len();
-    while i2 > 0{
-        y2 = zero.clone() + &y2;
-        i2 -=1;
-    } 
-    
-    let hash_before = y0 + &y1 + &y2;
-    let hash = nonce+ &hash_before;
-    let hasher = Blake2b256::digest(hash.as_bytes());
-    let whole = format!("{:x}", hasher.clone());
-    let head = &whole[32..];
-    let i = u128::from_str_radix(head,16).unwrap();
-    return i;
+    let hyphen = String::from('-');
+    let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+
+
+    let mut hasher = Blake2b256::digest(origin_string.as_bytes());
+    let mut whole = format!("{:x}", hasher.clone());
+    console_log!("content_hash is {:?}",whole);
+
+    let go_to_hash = y4 + &y0 + &whole;
+    let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
+    let mut whole = format!("{:x}", hasher.clone());
+
+    let head = &whole[0..32];
+    let rear = &whole[32..];
+
+    // let i = u128::from_str_radix(head,16).unwrap();
+    let i2 = u128::from_str_radix(rear,16).unwrap();
+
+    return i2;    
 }
 
 pub fn khash_a(x1:u128, y1:u128, x2:u128, y2:u128, x3:u128, y3:u128, x4:u128, y4:u128, x5:u128, y5:u128) -> u128{
-
     let zero = String::from("0");
     let mut x1= format!("{:x}", x1);
     let mut i1 = 32 - x1.len();
@@ -528,6 +709,7 @@ pub fn khash_a(x1:u128, y1:u128, x2:u128, y2:u128, x3:u128, y3:u128, x4:u128, y4
     let head = &whole[0..32];
     let i = u128::from_str_radix(head,16).unwrap();
     return i;
+   
 }
 
 

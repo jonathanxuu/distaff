@@ -226,7 +226,7 @@ fn parse_branch(body: &mut Vec<ProgramBlock>, tokens: &[&str], mut i: usize) -> 
 
 /// Transforms an assembly instruction into a sequence of one or more VM instructions.
 fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut HintMap, step: usize) -> Result<usize, AssemblyError> {
-
+    console_log!("hi im in kvalid console,parse_op_token");
     // based on the instruction, invoke the correct parser for the operation
     match op[0] {
         "noop"   => parse_noop(op_codes, &op, step),
@@ -265,7 +265,7 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
         "smpath" => parse_smpath(op_codes, &op, step),
         "pmpath" => parse_pmpath(op_codes, op_hints, &op, step),
         // "rmerkle" => parse_rmerkle(op_codes, &op, step),
-        "blake2b" => parse_blake2b(op_codes, &op, step),
+        "kvalid" => {console_log!("hi im in kvalid console");parse_kvalid(op_codes, &op, step)},
         "khash" => parse_khash(op_codes, &op, step),
         
         _ => return Err(AssemblyError::invalid_op(&op, step))

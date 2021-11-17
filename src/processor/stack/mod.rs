@@ -111,7 +111,7 @@ impl Stack {
             OpCode::BinAcc      => self.op_binacc(op_hint),
 
             OpCode::RescR       => self.op_rescr(),
-            OpCode::Blake2b     => self.op_blake2b(),
+            OpCode::Kvalid     => self.op_kvalid(),
             OpCode::Khash      => self.op_khash(),
 
 
@@ -617,24 +617,50 @@ impl Stack {
         self.copy_state(HASH_STATE_WIDTH);
     }
 
-    fn op_blake2b(&mut self){
-        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
-        let x1 = self.registers[6][self.step - 1];
-        let x2 = self.registers[5][self.step - 1];
-        let x3 = self.registers[4][self.step - 1];
-        let x4 = self.registers[3][self.step - 1];
-        let x5 = self.registers[2][self.step - 1];
+    // fn op_blake2b(&mut self){
+    //     assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+    //     let x1 = self.registers[6][self.step - 1];
+    //     let x2 = self.registers[5][self.step - 1];
+    //     let x3 = self.registers[4][self.step - 1];
+    //     let x4 = self.registers[3][self.step - 1];
+    //     let x5 = self.registers[2][self.step - 1];
 
-        let y1 = self.registers[0][self.step - 1];
-        let y2 = self.registers[1][self.step - 1];
+    //     let y1 = self.registers[0][self.step - 1];
+    //     let y2 = self.registers[1][self.step - 1];
        
-        self.registers[0][self.step] = field::blake_a(x1, x2, x3, x4, x5, y1, y2);
-        self.registers[1][self.step] = field::blake_b(x1, x2, x3, x4, x5, y1, y2);
+    //     self.registers[0][self.step] = field::blake_a(x1, x2, x3, x4, x5, y1, y2);
+    //     self.registers[1][self.step] = field::blake_b(x1, x2, x3, x4, x5, y1, y2);
+    //     // self.registers[2][self.step] = self.registers[7][self.step - 1];
+    //     // self.registers[3][self.step] = self.registers[8][self.step - 1];
+
+    //     // self.copy_state(7);
+    //     self.shift_left(7, 5);
+
+    //     // TODO
+    // }
+
+    fn op_kvalid(&mut self){
+        assert!(self.depth >= 2, "stack underflow at step {}", self.step);
+        let x1 = self.registers[8][self.step - 1];
+        let x2 = self.registers[7][self.step - 1];
+        let x3 = self.registers[6][self.step - 1];
+        let x4 = self.registers[5][self.step - 1];
+        let x5 = self.registers[4][self.step - 1];
+
+        let content = self.registers[3][self.step - 1];
+        let ctype_2 = self.registers[2][self.step - 1];
+        let ctype_1 = self.registers[1][self.step - 1];
+        let ascii = self.registers[0][self.step - 1];
+
+        self.registers[0][self.step] = self.registers[9][self.step - 1];
+        self.registers[1][self.step] = field::kvalid_a(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
+        self.registers[2][self.step] = field::kvalid_b(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
+
         // self.registers[2][self.step] = self.registers[7][self.step - 1];
         // self.registers[3][self.step] = self.registers[8][self.step - 1];
 
         // self.copy_state(7);
-        self.shift_left(7, 5);
+        self.shift_left(9, 6);
 
         // TODO
     }

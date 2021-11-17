@@ -1,6 +1,7 @@
 use crate::{ math::field };
 use super::{ AssemblyError, HintMap, OpCode, OpHint };
 use sp_std::{vec, vec::Vec};
+use wasm_bindgen_test::console_log;
 
 // CONSTANTS
 // ================================================================================================
@@ -465,20 +466,24 @@ pub fn parse_hash(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result
     return Ok(true);
 }
 
-pub fn parse_blake2b(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
+pub fn parse_kvalid(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
+    console_log!("im in kavalid");
 
+    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
+    console_log!("im in kavalid");
     program.extend_from_slice(&[
         // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::Sha256,
         // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::CSwap2, OpCode::Pad2
-        OpCode::Blake2b
+        OpCode::Kvalid
 
     ]);
+    console_log!("im in kavalid2");
 
     // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16
     let alignment = program.len() % HASH_OP_ALIGNMENT;
     let pad_length = (HASH_OP_ALIGNMENT - alignment) % HASH_OP_ALIGNMENT;
     program.resize(program.len() + pad_length, OpCode::Noop);
+    console_log!("im in kavalid3");
 
     return Ok(true);
 }
