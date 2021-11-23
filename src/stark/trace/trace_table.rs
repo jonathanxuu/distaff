@@ -5,6 +5,7 @@ use crate::utils::{ uninit_vector, filled_vector, as_bytes };
 use super::{ TraceState };
 use sp_std::{vec, vec::Vec};
 use serde::{Serialize, Deserialize};
+use wasm_bindgen_test::*;
 
 // TYPES AND INTERFACES
 // ================================================================================================
@@ -61,7 +62,7 @@ impl TraceTable {
     }
 
     /// Returns state of the trace table at the specified `step`.
-    pub fn get_state(&self, step: usize) -> TraceState {
+    pub fn  get_state(&self, step: usize) -> TraceState {
         let mut result = TraceState::new(self.ctx_depth, self.loop_depth, self.stack_depth);
         self.fill_state(&mut result, step);
         return result;
@@ -146,9 +147,11 @@ impl TraceTable {
     pub fn extend(&mut self, twiddles: &[u128]) {
         assert!(!self.is_extended(), "trace table has already been extended");
         assert!(twiddles.len() * 2 == self.domain_size(), "invalid number of twiddles");
+        console_log!("self.domain_size is {:?}",self.domain_size());
 
         // build inverse twiddles needed for FFT interpolation
         let root = field::get_root_of_unity(self.unextended_length());
+
         let inv_twiddles = fft::get_inv_twiddles(root, self.unextended_length());
         
         // move register traces into polys

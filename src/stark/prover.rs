@@ -21,15 +21,20 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     // 1 ----- extend execution trace -------------------------------------------------------------
     // build LDE domain and LDE twiddles (for FFT evaluation over LDE domain)
     let lde_root = field::get_root_of_unity(trace.domain_size());
-
+    console_log!("trace.domain_size is {:?},lde_root is {:?}",trace.domain_size(),lde_root);
     let lde_domain = field::get_power_series(lde_root, trace.domain_size());
-
+    
     let lde_twiddles = twiddles_from_domain(&lde_domain);
 
     // extend the execution trace registers to LDE domain
 
     trace.extend(&lde_twiddles);
 
+
+    console_log!("Extended execution trace from {} to {} steps",
+    trace.unextended_length(),
+    trace.domain_size());
+    
     debug!("Extended execution trace from {} to {} steps",
         trace.unextended_length(),
         trace.domain_size());
@@ -170,7 +175,6 @@ fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &ProofO
 
     for _ in 0..1000 {
         let value = index_iter.next().unwrap();
-        console_log!("value is {:?}",value);
 
         if value % options.extension_factor() == 0 { continue; }
 
@@ -192,16 +196,18 @@ fn twiddles_from_domain(domain: &[u128]) -> Vec<u128> {
     console_log!("the domain is {:?},domain len is {:?}",domain,domain.len());
 
     let mut twiddles = domain[..(domain.len() / 2)].to_vec();
-    console_log!("twiddle is {:?}, twiddle len is {:?}",twiddles,twiddles.len());
-    // 截取domain的前半段（4096），然后进行快速傅立叶变换，获得长度为4096的twiddles
+    // 截取domain的前半段，然后进行快速傅立叶变换，获得长度一半twiddles
+    let mut test = [1,2,3,4,5,6,7,8];
+    fft::permute(&mut test);
     fft::permute(&mut twiddles);    
     // 这里进行快速傅立叶变换 
-    console_log!("twiddle after is {:?}", twiddles);
+    console_log!("test is {:?}",test);
     return twiddles;
 }
 
 /// Re-interpret vector of 16-byte values as a vector of 32-byte arrays
 fn evaluations_to_leaves(evaluations: Vec<u128>) -> Vec<[u8; 32]> {
+    console_log!("before evalustaions_to_leaves evaluations.len() is {:?},evaluations is {:?}",evaluations.len(),evaluations);
     assert!(evaluations.len() % 2 == 0, "number of values must be divisible by 2");
     let mut v = sp_std::mem::ManuallyDrop::new(evaluations);
     let p = v.as_mut_ptr();

@@ -9,6 +9,7 @@ use crate::{
     NUM_CF_OP_BITS, NUM_LD_OP_BITS, NUM_HD_OP_BITS,
     CF_OP_BITS_RANGE, LD_OP_BITS_RANGE, HD_OP_BITS_RANGE,
 };
+use wasm_bindgen_test::*;
 
 // CONSTANTS
 // ================================================================================================

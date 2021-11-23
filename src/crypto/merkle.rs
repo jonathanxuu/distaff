@@ -300,6 +300,7 @@ pub fn build_merkle_nodes(leaves: &[[u8; 32]], hash: HashFunction) -> Vec<[u8; 3
         hash(&two_nodes[i], &mut nodes[i]);
     }
 
+    
     return nodes;
 }
 

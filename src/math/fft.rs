@@ -1,5 +1,7 @@
 use crate::math::field;
 use sp_std::vec::Vec;
+use wasm_bindgen_test::*;
+use web_sys::console;
 
 // CONSTANTS
 // ================================================================================================
@@ -64,11 +66,20 @@ pub fn get_twiddles(root: u128, size: usize) -> Vec<u128> {
     assert!(field::exp(root, size as u128) == field::ONE);
     let mut twiddles = field::get_power_series(root, size / 2);
     permute(&mut twiddles);
+
+    // let mut test = [1,2,3,4,5,6,7,8];
+    // permute(&mut test);
+    // console_log!("test permute is {:?}",test);
+
     return twiddles;
 }
 
 pub fn get_inv_twiddles(root: u128, size: usize) -> Vec<u128> {
     let inv_root = field::exp(root, (size - 1) as u128);
+    
+    console_log!("im in get_inv_twiddles,root is{:?},size -1 is {:?},inv_root is {:?}",root,size-1,inv_root);
+    console_log!("im in get_inv_twiddles,test field is {:?}",field::exp(root, (size) as u128));
+
     return get_twiddles(inv_root, size);
 }
 
@@ -80,6 +91,7 @@ pub fn permute(v: &mut [u128]) {
             v.swap(i, j);
         }
     }
+
 }
 
 // HELPER FUNCTIONS

@@ -23,7 +23,6 @@ pub fn compile(source: &str) -> Result<Program, AssemblyError> {
     // break assembly string into tokens
     let tokens: Vec<&str> = source.split_whitespace().collect();
     // 将program按空格分开
-    console_log!("tokens is {:?}",tokens);
 
     // perform basic validation
     if tokens.len() == 0 {
@@ -38,17 +37,13 @@ pub fn compile(source: &str) -> Result<Program, AssemblyError> {
 
     // read the program from the token stream
     let mut root_blocks = Vec::new();
-    console_log!("root_blocks is {:?}",serde_json::to_string(&root_blocks).unwrap());
 
 
     let i = parse_branch(&mut root_blocks, &tokens, 0)?;
    
-    console_log!("i = {:?}",i);
-    console_log!("root_blocks is {:?}",serde_json::to_string(&root_blocks).unwrap());
    
     let root = Group::new(root_blocks);
     
-    console_log!("root is {:?}",serde_json::to_string(&root).unwrap());
 
     // make sure there is nothing left after the last token
     if i < tokens.len() - 1 {
@@ -265,13 +260,13 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
         "smpath" => parse_smpath(op_codes, &op, step),
         "pmpath" => parse_pmpath(op_codes, op_hints, &op, step),
         // "rmerkle" => parse_rmerkle(op_codes, &op, step),
-        "kvalid" => {console_log!("hi im in kvalid console");parse_kvalid(op_codes, &op, step)},
-        "khash" => parse_khash(op_codes, &op, step),
+        "kvalid" => {parse_kvalid(op_codes, &op, step)},
+        "khash" => parse_khash(op_codes, op_hints, &op, step),
         
         _ => return Err(AssemblyError::invalid_op(&op, step))
     }?;
     console_log!("after do parse_op_token, op is {:?}, op_codes is{:?}, op_hints is {:?},i is {:?}",op,op_codes,op_hints,step+1);
-    // advance instruction pointer to the next step
+    // advance instruction pointer to the nexxt step
     return Ok(step + 1);
 }
 
@@ -281,9 +276,7 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
 /// Adds a new Span block to a program block body based on currently parsed instructions.
 fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: &mut HintMap, force: bool) {
     // if there were no instructions in the current span, don't do anything
-    console_log!("im in add_span1");
     if op_codes.len() == 0 && !force { return };
-    console_log!("im in add_span2");
 
     // pad the instructions to make ensure 16-cycle alignment
     let mut span_op_codes = op_codes.clone();
@@ -291,9 +284,7 @@ fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: 
     span_op_codes.resize(span_op_codes.len() + pad_length, OpCode::Noop);
 
     // add a new Span block to the body
-    console_log!("im in add_span3， body is {:?}",body);
     body.push(ProgramBlock::Span(Span::new(span_op_codes, op_hints.clone())));
-    console_log!("im in add_span4， body is {:?}",body);
 
     // clear op_codes and op_hints for the next Span block
     op_codes.clear();

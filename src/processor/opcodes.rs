@@ -184,6 +184,7 @@ pub enum OpHint {
     RcStart(u32),
     CmpStart(u32),
     PmpathStart(u32),
+    KhashStart(u32),
     PushValue(u128),
     None,
 }
@@ -204,6 +205,7 @@ impl sp_std::fmt::Display for OpHint {
             OpHint::RcStart(value)   => write!(f, ".{}", value),
             OpHint::CmpStart(value)     => write!(f, ".{}", value),
             OpHint::PmpathStart(value)  => write!(f, ".{}", value),
+            OpHint::KhashStart(value)  => write!(f, ".{}", value),
             OpHint::PushValue(value)    => write!(f, "({})", value),
             OpHint::None             => Ok(()),
         };

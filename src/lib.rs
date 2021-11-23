@@ -93,7 +93,6 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
 
     // execute the program to create an execution trace
     let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
-    // console_log!("trace vecvec is {:?}",trace);
 
     // console_log!("trace is {:?},ctx_depth is {:?}.loop_depth is {:?}",trace, ctx_depth,loop_depth);
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
@@ -102,6 +101,7 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
         trace.unextended_length());
 
     // copy the user stack state the the last step to return as output
+
     let last_state = trace.get_last_state();
     let outputs = last_state.user_stack()[..num_outputs].to_vec();
 
@@ -120,7 +120,6 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
     // console_log!("outputssss = {:?}",outputs);
     console_log!("hash = {:?}",hex::encode(program.hash()));
     // generate STARK proof
-    // console_log!("trace is {:?},inuts.public is {:?}. outoupts is {:?}. option is {:?}",serde_json::to_string(&trace).unwrap(),inputs.get_public_inputs(),outputs,serde_json::to_string(&options).unwrap());
 
     // console_log!("prooooooooof is {:?}",serde_json::to_string(&proof).unwrap());
     let proof = stark::prove(&mut trace, inputs.get_public_inputs(), &outputs, &options);
@@ -201,6 +200,7 @@ pub fn starks_proofgen_with_program_name(program_name: String, inputs_string: St
 
     // copy the user stack state the the last step to return as output
     let last_state = trace.get_last_state();
+    console_log!("last_state is {:?}",last_state);
     let outputs = last_state.user_stack()[..num_outputs].to_vec();
 
     // make sure number of executed operations was sufficient

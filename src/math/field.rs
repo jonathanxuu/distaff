@@ -256,7 +256,6 @@ pub fn get_power_series(b: u128, length: usize) -> Vec<u128> {
 
     }    
     // console_log!("aftfer for result is {:?}",result);
-
     return result;
 }
 
@@ -476,11 +475,9 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     while x1.len() < 8{
         x1 = zero.clone() + &x1;
     }
-
     if x2.len() % 2 !=0{
         x2 = zero.clone() + &x2;
     };
-
     while x2.len() < 4{
         x2 = zero.clone() + &x2;
     }
@@ -502,15 +499,11 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     while x5.len() < 12{
         x5 = zero.clone() + &x5;
     }
-    // println!("nonce is {:?},{:?},{:?},{:?},{:?}",x1,x2,x3,x4,x5);
 
     let hyphen = String::from('-');
     let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
-
-
     let mut hasher = Blake2b256::digest(origin_string.as_bytes());
     let mut whole = format!("{:x}", hasher.clone());
-    console_log!("content_hash is {:?}",whole);
 
     let go_to_hash = y4 + &y0 + &whole;
     let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
@@ -518,10 +511,7 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let head = &whole[0..32];
     let rear = &whole[32..];
-
     let i = u128::from_str_radix(head,16).unwrap();
-    // let i2 = u128::from_str_radix(rear,16).unwrap();
-
     return i;    
 }
 
@@ -593,7 +583,6 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     while x5.len() < 12{
         x5 = zero.clone() + &x5;
     }
-    // println!("nonce is {:?},{:?},{:?},{:?},{:?}",x1,x2,x3,x4,x5);
 
     let hyphen = String::from('-');
     let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
@@ -601,7 +590,6 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let mut hasher = Blake2b256::digest(origin_string.as_bytes());
     let mut whole = format!("{:x}", hasher.clone());
-    console_log!("content_hash is {:?}",whole);
 
     let go_to_hash = y4 + &y0 + &whole;
     let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
@@ -616,197 +604,82 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     return i2;    
 }
 
-pub fn khash_a(x1:u128, y1:u128, x2:u128, y2:u128, x3:u128, y3:u128, x4:u128, y4:u128, x5:u128, y5:u128) -> u128{
+pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
     let zero = String::from("0");
-    let mut x1= format!("{:x}", x1);
-    let mut i1 = 32 - x1.len();
-    while i1 > 0 {
-        x1 = zero.clone() + &x1;
-        i1 -=1;
-    } 
-    let mut y1 = format!("{:x}", y1);
-    let mut i2 = 32 - y1.len();
-    while i2 > 0 {
-        y1 = zero.clone() + &y1;
-        i2 -=1;
-    } 
-    let mut hash_before_1 = x1 + &y1;
+    let mut hex_list: Vec<Vec<u8>> = Vec::new();
+    let mut concat_saltedhash: Vec<u8> = Vec::new();
+    assert_eq!(hash_in_khash.len() / 2, n as usize);
+    for i in 0..n{
+        let mut x1 = format!("{:x}", hash_in_khash[(i * 2) as usize]);
+        let mut y1 = format!("{:x}", hash_in_khash[(i * 2 + 1) as usize]);
 
-    let mut x2= format!("{:x}", x2);
-    let mut i1 = 32 - x2.len();
-    while i1 > 0 {
-        x2 = zero.clone() + &x2;
-        i1 -=1;
-    } 
-    let mut y2 = format!("{:x}", y2);
-    let mut i2 = 32 - y2.len();
-    while i2 > 0 {
-        y2 = zero.clone() + &y2;
-        i2 -=1;
-    } 
-    let mut hash_before_2 = x2 + &y2;
+        let mut i = 32 - x1.len();
+        while i > 0 {
+            x1 = zero.clone() + &x1;
+            i -=1;
+        }; 
 
-    let mut x3= format!("{:x}", x3);
-    let mut i1 = 32 - x3.len();
-    while i1 > 0 {
-        x3 = zero.clone() + &x3;
-        i1 -=1;
-    } 
-    let mut y3 = format!("{:x}", y3);
-    let mut i2 = 32 - y3.len();
-    while i2 > 0 {
-        y3 = zero.clone() + &y3;
-        i2 -=1;
-    } 
-    let mut hash_before_3 = x3 + &y3;
+        let mut i = 32 - y1.len();
+        while i > 0 {
+            y1 = zero.clone() + &y1;
+            i -=1;
+        }; 
+        hex_list.push(hex::decode(x1 + &y1).unwrap());
+    };
 
-    let mut x4= format!("{:x}", x4);
-    let mut i1 = 32 - x4.len();
-    while i1 > 0 {
-        x4 = zero.clone() + &x4;
-        i1 -=1;
+    for i in 0..n{
+        concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
-    let mut y4 = format!("{:x}", y4);
-    let mut i2 = 32 - y4.len();
-    while i2 > 0 {
-        y4 = zero.clone() + &y4;
-        i2 -=1;
-    } 
-    let mut hash_before_4 = x4 + &y4;
-
-    let mut x5= format!("{:x}", x5);
-    let mut i1 = 32 - x5.len();
-    while i1 > 0 {
-        x5 = zero.clone() + &x5;
-        i1 -=1;
-    } 
-    let mut y5 = format!("{:x}", y5);
-    let mut i2 = 32 - y5.len();
-    while i2 > 0 {
-        y5 = zero.clone() + &y5;
-        i2 -=1;
-    } 
-    let mut hash_before_5 = x5 + &y5;
-
-    let mut hex1 = hex::decode(hash_before_1).unwrap();
-    let mut hex2 = hex::decode(hash_before_2).unwrap();
-    let mut hex3 = hex::decode(hash_before_3).unwrap();
-    let mut hex4 = hex::decode(hash_before_4).unwrap();
-    let mut hex5 = hex::decode(hash_before_5).unwrap();
-
-    let mut e:Vec<u8> = vec![];
-    e.append(&mut hex1);
-    e.append(&mut hex2);
-    e.append(&mut hex3);
-    e.append(&mut hex4);
-    e.append(&mut hex5);
 
     let mut context = Blake2bSum::new(32);
-    let mut hash = context.read_bytes(&e);
+    let mut hash = context.read_bytes(&concat_saltedhash);
     let mut bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
 
     let head = &whole[0..32];
     let i = u128::from_str_radix(head,16).unwrap();
     return i;
-   
 }
 
 
-pub fn khash_b(x1:u128, y1:u128, x2:u128, y2:u128, x3:u128, y3:u128, x4:u128, y4:u128, x5:u128, y5:u128) -> u128{
-
+pub fn khash_b(hash_in_khash: &Vec<u128>, n:u32) -> u128{
     let zero = String::from("0");
-    let mut x1= format!("{:x}", x1);
-    let mut i1 = 32 - x1.len();
-    while i1 > 0 {
-        x1 = zero.clone() + &x1;
-        i1 -=1;
-    } 
-    let mut y1 = format!("{:x}", y1);
-    let mut i2 = 32 - y1.len();
-    while i2 > 0 {
-        y1 = zero.clone() + &y1;
-        i2 -=1;
-    } 
-    let mut hash_before_1 = x1 + &y1;
+    let mut hex_list: Vec<Vec<u8>> = Vec::new();
+    let mut concat_saltedhash: Vec<u8> = Vec::new();
+    assert_eq!(hash_in_khash.len() / 2, n as usize);
+    for i in 0..n{
+        let mut x1 = format!("{:x}", hash_in_khash[(i * 2) as usize]);
+        let mut y1 = format!("{:x}", hash_in_khash[(i * 2 + 1) as usize]);
 
-    let mut x2= format!("{:x}", x2);
-    let mut i1 = 32 - x2.len();
-    while i1 > 0 {
-        x2 = zero.clone() + &x2;
-        i1 -=1;
-    } 
-    let mut y2 = format!("{:x}", y2);
-    let mut i2 = 32 - y2.len();
-    while i2 > 0 {
-        y2 = zero.clone() + &y2;
-        i2 -=1;
-    } 
-    let mut hash_before_2 = x2 + &y2;
+        let mut i = 32 - x1.len();
+        while i > 0 {
+            x1 = zero.clone() + &x1;
+            i -=1;
+        }; 
 
-    let mut x3= format!("{:x}", x3);
-    let mut i1 = 32 - x3.len();
-    while i1 > 0 {
-        x3 = zero.clone() + &x3;
-        i1 -=1;
-    } 
-    let mut y3 = format!("{:x}", y3);
-    let mut i2 = 32 - y3.len();
-    while i2 > 0 {
-        y3 = zero.clone() + &y3;
-        i2 -=1;
-    } 
-    let mut hash_before_3 = x3 + &y3;
+        let mut i = 32 - y1.len();
+        while i > 0 {
+            y1 = zero.clone() + &y1;
+            i -=1;
+        }; 
+        hex_list.push(hex::decode(x1 + &y1).unwrap());
+    };
 
-    let mut x4= format!("{:x}", x4);
-    let mut i1 = 32 - x4.len();
-    while i1 > 0 {
-        x4 = zero.clone() + &x4;
-        i1 -=1;
+    for i in 0..n{
+        concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
-    let mut y4 = format!("{:x}", y4);
-    let mut i2 = 32 - y4.len();
-    while i2 > 0 {
-        y4 = zero.clone() + &y4;
-        i2 -=1;
-    } 
-    let mut hash_before_4 = x4 + &y4;
-
-    let mut x5= format!("{:x}", x5);
-    let mut i1 = 32 - x5.len();
-    while i1 > 0 {
-        x5 = zero.clone() + &x5;
-        i1 -=1;
-    } 
-    let mut y5 = format!("{:x}", y5);
-    let mut i2 = 32 - y5.len();
-    while i2 > 0 {
-        y5 = zero.clone() + &y5;
-        i2 -=1;
-    } 
-    let mut hash_before_5 = x5 + &y5;
-
-    let mut hex1 = hex::decode(hash_before_1).unwrap();
-    let mut hex2 = hex::decode(hash_before_2).unwrap();
-    let mut hex3 = hex::decode(hash_before_3).unwrap();
-    let mut hex4 = hex::decode(hash_before_4).unwrap();
-    let mut hex5 = hex::decode(hash_before_5).unwrap();
-
-    let mut e:Vec<u8> = vec![];
-    e.append(&mut hex1);
-    e.append(&mut hex2);
-    e.append(&mut hex3);
-    e.append(&mut hex4);
-    e.append(&mut hex5);
 
     let mut context = Blake2bSum::new(32);
-    let mut hash = context.read_bytes(&e);
+    let mut hash = context.read_bytes(&concat_saltedhash);
     let mut bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
 
     let rear = &whole[32..];
-    let i2 = u128::from_str_radix(rear,16).unwrap();
-    return i2;
+    let i = u128::from_str_radix(rear,16).unwrap();
+    return i;
+
+
+
 }
 // RANDOMNESS
 // --------------------------------------------------------------------------------------------

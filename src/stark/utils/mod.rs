@@ -38,7 +38,6 @@ pub fn compute_query_positions(seed: &[u8; 32], domain_size: usize, options: &Pr
 
     for _ in 0..1000 {
         let value = index_iter.next().unwrap() as usize;
-        console_log!("value is {:?}",value);
 
         if value % options.extension_factor() == 0 { continue; }
 

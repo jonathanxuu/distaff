@@ -112,7 +112,7 @@ impl Stack {
 
             OpCode::RescR       => self.op_rescr(),
             OpCode::Kvalid     => self.op_kvalid(),
-            OpCode::Khash      => self.op_khash(),
+            OpCode::Khash      => self.op_khash(op_hint),
 
 
         }
@@ -150,8 +150,6 @@ impl Stack {
     /// Merges all register traces into a single vector of traces.
     pub fn into_register_traces(mut self) -> Vec<Vec<u128>> {
         self.registers.truncate(self.max_depth);
-        console_log!("max_depth is {:?}",self.max_depth);
-        console_log!("depth is {:?}",self.depth);
 
 
         return self.registers;
@@ -641,28 +639,21 @@ impl Stack {
 
     fn op_kvalid(&mut self){
         assert!(self.depth >= 2, "stack underflow at step {}", self.step);
-        let x1 = self.registers[8][self.step - 1];
-        let x2 = self.registers[7][self.step - 1];
-        let x3 = self.registers[6][self.step - 1];
-        let x4 = self.registers[5][self.step - 1];
-        let x5 = self.registers[4][self.step - 1];
+        let ascii = self.registers[8][self.step - 1];
+        let x1 = self.registers[7][self.step - 1];
+        let x2 = self.registers[6][self.step - 1];
+        let x3 = self.registers[5][self.step - 1];
+        let x4 = self.registers[4][self.step - 1];
+        let x5 = self.registers[3][self.step - 1];
 
-        let content = self.registers[3][self.step - 1];
-        let ctype_2 = self.registers[2][self.step - 1];
-        let ctype_1 = self.registers[1][self.step - 1];
-        let ascii = self.registers[0][self.step - 1];
+        let content = self.registers[2][self.step - 1];
+        let ctype_2 = self.registers[1][self.step - 1];
+        let ctype_1 = self.registers[0][self.step - 1];
 
-        self.registers[0][self.step] = self.registers[9][self.step - 1];
-        self.registers[1][self.step] = field::kvalid_a(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
-        self.registers[2][self.step] = field::kvalid_b(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
+        self.registers[0][self.step] = field::kvalid_a(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
+        self.registers[1][self.step] = field::kvalid_b(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
 
-        // self.registers[2][self.step] = self.registers[7][self.step - 1];
-        // self.registers[3][self.step] = self.registers[8][self.step - 1];
-
-        // self.copy_state(7);
-        self.shift_left(9, 6);
-
-        // TODO
+        self.shift_left(9, 7);
     }
 
     // fn op_sha256(&mut self) {
@@ -683,31 +674,51 @@ impl Stack {
     //     self.copy_state(4);
 
     // }
-        fn op_khash(&mut self){
-            assert!(self.depth >= 2, "stack underflow at step {}", self.step);
-        let x1 = self.registers[8][self.step - 1];
-        let y1 = self.registers[9][self.step - 1];
+        fn op_khash(&mut self, hint: OpHint){
+            match hint {
+                OpHint::KhashStart(n) => {
+                    // if we are about to equality comparison sequence, push inverse of the difference
+                    // between top two stack values onto secret tape A, if they are equal; otherwise
+                    // push value 1
+                    let mut hash_in_khash :Vec<u128> = Vec::new();
 
-        let x2 = self.registers[6][self.step - 1];
-        let y2 = self.registers[7][self.step - 1];
+                    for i in 1..(n + 1) {
+                        let k = (2 * n - 2 * i + 1 ) as usize;
+                        hash_in_khash.push(self.registers[k][self.step - 1]);
+                        hash_in_khash.push(self.registers[k + 1][self.step - 1]);
+                    }
 
-        let x3 = self.registers[4][self.step - 1];
-        let y3 = self.registers[5][self.step - 1];
+                    self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
+                    self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
+                    self.shift_left((2 * n + 1) as usize, (2 * n - 1) as usize);
 
-        let x4 = self.registers[2][self.step - 1];
-        let y4 = self.registers[3][self.step - 1];
+                },
+                _ => panic!("execution hint {:?} is not valid for READ operation", hint)
+            }
+        // let x1 = self.registers[9][self.step - 1];
+        // let y1 = self.registers[10][self.step - 1];
 
-        let x5 = self.registers[0][self.step - 1];
-        let y5 = self.registers[1][self.step - 1];
+        // let x2 = self.registers[7][self.step - 1];
+        // let y2 = self.registers[8][self.step - 1];
 
-       
-        self.registers[0][self.step] = field::khash_a(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5);
-        self.registers[1][self.step] = field::khash_b(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5);
-        // self.registers[2][self.step] = self.registers[7][self.step - 1];
-        // self.registers[3][self.step] = self.registers[8][self.step - 1];
+        // let x3 = self.registers[5][self.step - 1];
+        // let y3 = self.registers[6][self.step - 1];
+
+        // let x4 = self.registers[3][self.step - 1];
+        // let y4 = self.registers[4][self.step - 1];
+
+        // let x5 = self.registers[1][self.step - 1];
+        // let y5 = self.registers[2][self.step - 1];
+
+        // let index = self.registers[0][self.step - 1];
+		// let index_usize = index as usize;
+
+        // self.registers[0][self.step] = field::khash_a(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5);
+        // self.registers[1][self.step] = field::khash_b(x1, y1, x2, y2, x3, y3, x4, y4, x5, y5);
+
 
         // self.copy_state(7);
-        self.shift_left(10, 8);
+        // self.shift_left(11, 9);
 
         }
     // HELPER METHODS

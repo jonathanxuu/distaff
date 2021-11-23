@@ -488,27 +488,12 @@ pub fn parse_kvalid(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Resu
     return Ok(true);
 }
 
-pub fn parse_khash(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
 
-    program.extend_from_slice(&[
-        // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::Sha256,
-        // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::CSwap2, OpCode::Pad2
-        OpCode::Khash
-
-    ]);
-
-    // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16
-    let alignment = program.len() % HASH_OP_ALIGNMENT;
-    let pad_length = (HASH_OP_ALIGNMENT - alignment) % HASH_OP_ALIGNMENT;
-    program.resize(program.len() + pad_length, OpCode::Noop);
-
-    return Ok(true);
-}
 /// Appends a sequence of operations to the program to compute the root of Merkle authentication
 /// path for a tree of depth n. Leaf index is expected to be provided via input tapes A and B.
 pub fn parse_smpath(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
     let n = read_param(op, step)?;
+    console_log!("your entered number is {:?}~~~~~~~~~~~~~~~~~~~~~`",n);
     if n < 2 || n > 256 {
         return Err(AssemblyError::invalid_param_reason(op, step,
             format!("parameter {} is invalid; value must be between 2 and 256", n)))
@@ -591,6 +576,7 @@ pub fn parse_pmpath(program: &mut Vec<OpCode>, hints: &mut HintMap, op: &[&str],
         return Err(AssemblyError::invalid_param_reason(op, step,
             format!("parameter {} is invalid; value must be between 2 and 256", n)))
     }
+    console_log!("your entered number is {:?}~~~~~~~~~~~~~~~~~~~~~`",n);
 
     // add a hint indicating that pmpath macro is about to begin
     hints.insert(program.len(), OpHint::PmpathStart(n));
@@ -636,6 +622,47 @@ pub fn parse_pmpath(program: &mut Vec<OpCode>, hints: &mut HintMap, op: &[&str],
 
     return Ok(true);
 }
+
+pub fn parse_khash(program: &mut Vec<OpCode>, hints: &mut HintMap, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
+    let n = read_param(op, step)?;
+    if n < 2 || n > 15 {
+        return Err(AssemblyError::invalid_param_reason(op, step,
+            format!("parameter {} is invalid; value must be between 2 and 15", n)))
+    }
+    console_log!("your entered credential leaf number(n+1) is {:?}~~~~~~~~~~~~~~~~~~~~~`",n);
+
+    // add a hint indicating that pmpath macro is about to begin
+    hints.insert(program.len(), OpHint::KhashStart(n));
+    
+    // read the first node and its index onto the stack and make sure nodes are arranged
+    // correctly. Also, set initial value of binary multiplier to 1.
+    program.extend_from_slice(&[OpCode::Khash]);
+ 
+    // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16
+    let alignment = program.len() % HASH_OP_ALIGNMENT;
+    let pad_length = (HASH_OP_ALIGNMENT - alignment) % HASH_OP_ALIGNMENT;
+    program.resize(program.len() + pad_length, OpCode::Noop);
+    return Ok(true);
+}
+
+
+// pub fn parse_khash(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
+//     if op.len() > 1 { return Err(AssemblyError::extra_param(op, step)); }
+
+//     program.extend_from_slice(&[
+//         // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::Sha256,
+//         // OpCode::Read2, OpCode::Swap2, OpCode::Read2, OpCode::CSwap2, OpCode::Pad2
+//         OpCode::Khash
+
+//     ]);
+
+//     // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16
+//     let alignment = program.len() % HASH_OP_ALIGNMENT;
+//     let pad_length = (HASH_OP_ALIGNMENT - alignment) % HASH_OP_ALIGNMENT;
+//     program.resize(program.len() + pad_length, OpCode::Noop);
+
+//     return Ok(true);
+// }
 
 // HELPER FUNCTIONS
 // ================================================================================================
