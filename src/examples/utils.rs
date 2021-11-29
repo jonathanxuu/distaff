@@ -1,6 +1,6 @@
 use sp_std::ptr::null;
 
-use distaff::{ ProofOptions };
+use starksVM::{ ProofOptions };
 
 pub fn parse_args(args: &[String]) -> (usize, ProofOptions) {
     

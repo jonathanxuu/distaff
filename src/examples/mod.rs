@@ -1,4 +1,4 @@
-use distaff::{ Program, ProgramInputs, ProofOptions };
+use starksVM::{ Program, ProgramInputs, ProofOptions };
 
 mod utils;
 

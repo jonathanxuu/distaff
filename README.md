@@ -41,13 +41,13 @@ A general description of Distaff VM is also provided 👉 [here](docs) 👈. If 
 #### Program execution example
 Here is a simple example of executing a program which pushes two numbers onto the stack and computes their sum:
 ```Rust
-use distaff::{ self, ProofOptions, ProgramInputs, assembly };
+use starksVM::{ self, ProofOptions, ProgramInputs, assembly };
 
 // this is our program, we compile it from assembly code
 let program = assembly::compile("begin push.3 push.5 add end").unwrap();
 
 // let's execute it
-let (outputs, proof) = distaff::execute(
+let (outputs, proof) = starksVM::execute(
         &program,
         &ProgramInputs::none(),     // we won't provide any inputs
         1,                          // we'll return one item from the stack
@@ -82,7 +82,7 @@ let program =   /* value from previous example */;
 let proof =     /* value from previous example */;
 
 // let's verify program execution
-match distaff::verify(program.hash(), &[], &[8], &proof) {
+match starksVM::verify(program.hash(), &[], &[8], &proof) {
     Ok(_) => println!("Execution verified!"),
     Err(msg) => println!("Execution verification failed: {}", msg)
 }
@@ -109,7 +109,7 @@ add         // stack state: 3 2
 ```
 Notice that except for the first 2 operations which initialize the stack, the sequence of `swap dup.2 drop add` operations repeats over and over. In fact, we can repeat these operations an arbitrary number of times to compute an arbitrary Fibonacci number. In Rust, it would like like this (this is actually a simplified version of the example in [fibonacci.rs](https://github.com/GuildOfWeavers/distaff/blob/master/src/examples/fibonacci.rs)):
 ```Rust
-use distaff::{ self, ProofOptions, ProgramInputs, assembly };
+use starksVM::{ self, ProofOptions, ProgramInputs, assembly };
 
 // use default proof options
 let options = ProofOptions::default();
@@ -130,7 +130,7 @@ let program = assembly::compile(&source).unwrap();
 let inputs = ProgramInputs::from_public(&[1, 0]);
 
 // execute the program
-let (outputs, proof) = distaff::execute(
+let (outputs, proof) = starksVM::execute(
         &program,
         &inputs,
         1,          // top stack item is the output

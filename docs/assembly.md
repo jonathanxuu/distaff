@@ -14,7 +14,7 @@ The `compile()` function returns `Result<Program, AssemblyError>` which will con
 
 For example:
 ```Rust
-use distaff::{ assembly };
+use starksVM::{ assembly };
 
 // the program pushes values 3 and 5 onto the stack and adds them
 let program = assembly::compile("begin push.3 push.5 add end").unwrap();

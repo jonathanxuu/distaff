@@ -1,4 +1,4 @@
-use distaff::{ Program, ProgramInputs, assembly, math::field };
+use starksVM::{ Program, ProgramInputs, assembly, math::field };
 use super::{ Example, utils::parse_args };
 
 pub fn get_example(args: &[String]) -> Example  {

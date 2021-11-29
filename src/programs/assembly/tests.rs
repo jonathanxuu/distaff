@@ -2,24 +2,24 @@
 // ================================================================================================
 #[test]
 fn single_block() {
-    let source = "begin push.1 push.2 add end";
-    let program = super::compile(source).unwrap();
+	let source = "begin push.1 push.2 add end";
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin noop noop noop noop noop noop noop \
         push(1) noop noop noop noop noop noop noop \
         push(2) add noop noop noop noop noop noop \
         noop noop noop noop noop noop noop end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn sequence_of_blocks() {
-    let source = "begin block push.1 push.2 add end block push.3 push.4 add end end";
-    let program = super::compile(source).unwrap();
+	let source = "begin block push.1 push.2 add end block push.3 push.4 add end end";
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin noop noop noop noop noop noop noop \
         noop noop noop noop noop noop noop block \
         push(1) noop noop noop noop noop noop noop \
@@ -28,15 +28,15 @@ fn sequence_of_blocks() {
         noop push(4) add noop noop noop noop noop \
         end end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn sequence_of_blocks_with_prefix() {
-    let source = "begin read read add block push.1 push.2 add end block push.3 push.4 sub end end";
-    let program = super::compile(source).unwrap();
+	let source = "begin read read add block push.1 push.2 add end block push.3 push.4 sub end end";
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin read read add noop noop noop noop \
         noop noop noop noop noop noop noop block \
         push(1) noop noop noop noop noop noop noop \
@@ -45,15 +45,16 @@ fn sequence_of_blocks_with_prefix() {
         noop push(4) neg add noop noop noop noop \
         end end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn sequence_of_blocks_with_prefix_and_suffix() {
-    let source = "begin read read add block push.1 push.2 add end block push.3 push.4 sub end hash.2 end";
-    let program = super::compile(source).unwrap();
+	let source =
+		"begin read read add block push.1 push.2 add end block push.3 push.4 sub end hash.2 end";
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin read read add noop noop noop noop \
         noop noop noop noop noop noop noop block \
         push(1) noop noop noop noop noop noop noop \
@@ -66,7 +67,7 @@ fn sequence_of_blocks_with_prefix_and_suffix() {
         rescr rescr rescr drop4 noop noop noop noop \
         end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 // SWITCH BLOCKS
@@ -74,7 +75,7 @@ fn sequence_of_blocks_with_prefix_and_suffix() {
 
 #[test]
 fn single_if_else() {
-    let source = "
+	let source = "
     begin
         push.3
         push.5
@@ -85,9 +86,9 @@ fn single_if_else() {
             mul dup add
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin noop noop noop noop noop noop noop \
         push(3) noop noop noop noop noop noop noop \
         push(5) read noop noop noop noop noop noop \
@@ -98,12 +99,12 @@ fn single_if_else() {
         noop noop noop noop noop noop noop end \
         end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn single_if_else_with_suffix() {
-    let source = "
+	let source = "
     begin
         push.3
         push.5
@@ -115,9 +116,9 @@ fn single_if_else_with_suffix() {
         end
         rc.16
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
         begin \
             noop noop noop noop noop noop noop \
             push(3) noop noop noop noop noop noop noop \
@@ -136,12 +137,12 @@ fn single_if_else_with_suffix() {
             binacc binacc binacc dup drop4 read::eq eq \
         end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn nested_if_else() {
-    let source = "
+	let source = "
     begin
         push.3
         push.5
@@ -155,9 +156,9 @@ fn nested_if_else() {
             mul dup add
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin noop noop noop noop noop noop noop \
         push(3) noop noop noop noop noop noop noop \
         push(5) read noop noop noop noop noop noop \
@@ -178,14 +179,14 @@ fn nested_if_else() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 // LOOP BLOCKS
 // ================================================================================================
 #[test]
 fn single_loop() {
-    let source = "
+	let source = "
     begin
         push.3
         push.5
@@ -194,9 +195,9 @@ fn single_loop() {
             add dup mul read.ab
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin noop noop noop noop noop noop noop \
         push(3) noop noop noop noop noop noop noop \
         push(5) read noop noop noop noop noop noop \
@@ -207,12 +208,12 @@ fn single_loop() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn loop_with_suffix_and_nested_if_else() {
-    let source = "
+	let source = "
     begin
         push.3
         push.5
@@ -225,9 +226,9 @@ fn loop_with_suffix_and_nested_if_else() {
             push.7 add
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin noop noop noop noop noop noop noop \
         push(3) noop noop noop noop noop noop noop \
         push(5) read noop noop noop noop noop noop \
@@ -247,7 +248,7 @@ fn loop_with_suffix_and_nested_if_else() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 // REPEAT BLOCKS
@@ -255,16 +256,16 @@ fn loop_with_suffix_and_nested_if_else() {
 
 #[test]
 fn repeat_2_spans() {
-    let source = "
+	let source = "
     begin
         read read add read eq
         repeat.2
             push.3 add
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin \
         read read add read read::eq eq noop \
         noop noop noop noop noop noop noop \
@@ -276,21 +277,21 @@ fn repeat_2_spans() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn repeat_5_spans() {
-    let source = "
+	let source = "
     begin
         read read add read eq
         repeat.5
             push.3 add
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin \
         read read add read read::eq eq noop \
         noop noop noop noop noop noop noop \
@@ -308,12 +309,12 @@ fn repeat_5_spans() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn repeat_2_blocks() {
-    let source = "
+	let source = "
     begin
         read read add read eq
         repeat.2
@@ -323,9 +324,9 @@ fn repeat_2_blocks() {
             end
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin \
         read read add read read::eq eq noop \
         noop noop noop noop noop noop noop \
@@ -351,12 +352,12 @@ fn repeat_2_blocks() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
 
 #[test]
 fn repeat_2_blocks_with_suffix() {
-    let source = "
+	let source = "
     begin
         read read add read eq
         repeat.2
@@ -367,9 +368,9 @@ fn repeat_2_blocks_with_suffix() {
             sub inv
         end
     end";
-    let program = super::compile(source).unwrap();
+	let program = super::compile(source).unwrap();
 
-    let expected = "\
+	let expected = "\
     begin \
         read read add read read::eq eq noop \
         noop noop noop noop noop noop noop \
@@ -399,5 +400,5 @@ fn repeat_2_blocks_with_suffix() {
         end \
     end";
 
-    assert_eq!(expected, format!("{:?}", program));
+	assert_eq!(expected, format!("{:?}", program));
 }
