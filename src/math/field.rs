@@ -456,10 +456,11 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
-    let ascii_string= ascii.to_string();
-    
+    let ascii_string = format!("{:x}",ascii);
     let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
     let ascii_final = String::from_utf8(ascii_vec).unwrap();
+
+
     let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
@@ -538,10 +539,10 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
-    let ascii_string= ascii.to_string();
-    
+    let ascii_string = format!("{:x}",ascii);
     let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
     let ascii_final = String::from_utf8(ascii_vec).unwrap();
+    
     let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
@@ -631,9 +632,9 @@ pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
         concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
 
-    let mut context = Blake2bSum::new(32);
-    let mut hash = context.read_bytes(&concat_saltedhash);
-    let mut bytes = Blake2bSum::as_bytes(&hash);
+    let context = Blake2bSum::new(32);
+    let hash = context.read_bytes(&concat_saltedhash);
+    let bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
 
     let head = &whole[0..32];
