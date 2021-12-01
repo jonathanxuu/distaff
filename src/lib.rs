@@ -93,8 +93,8 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
 
     // execute the program to create an execution trace
     let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
-
-    // console_log!("trace is {:?},ctx_depth is {:?}.loop_depth is {:?}",trace, ctx_depth,loop_depth);
+    // 这里trace是decoder和stack在执行过程中的所有步骤值
+    console_log!("now the options.extension_factor() is {:?}",options.extension_factor());
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
     debug!("Generated execution trace of {} registers and {} steps",
         trace.register_count(),

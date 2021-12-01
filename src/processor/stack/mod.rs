@@ -677,23 +677,21 @@ impl Stack {
         fn op_khash(&mut self, hint: OpHint){
             match hint {
                 OpHint::KhashStart(n) => {
-                    // if we are about to equality comparison sequence, push inverse of the difference
-                    // between top two stack values onto secret tape A, if they are equal; otherwise
-                    // push value 1
+                   
                     let mut hash_in_khash :Vec<u128> = Vec::new();
 
-                    for i in 1..(n + 1) {
-                        let k = (2 * n - 2 * i + 1 ) as usize;
+                    for i in 0..n {
+                        let k = (2 * (n - 1) - 2 * i ) as usize;
                         hash_in_khash.push(self.registers[k][self.step - 1]);
                         hash_in_khash.push(self.registers[k + 1][self.step - 1]);
                     }
-
+                    console_log!("hash in khash is{:?}",hash_in_khash);
                     self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
                     self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
-                    self.shift_left((2 * n + 1) as usize, (2 * n - 1) as usize);
+                    self.shift_left((2 * n) as usize, (2 * n - 2) as usize);
 
                 },
-                _ => panic!("execution hint {:?} is not valid for READ operation", hint)
+                _ => panic!("execution hint {:?} is not valid for Khash operation", hint)
             }
         // let x1 = self.registers[9][self.step - 1];
         // let y1 = self.registers[10][self.step - 1];

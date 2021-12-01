@@ -18,8 +18,12 @@ pub struct ConstraintTable {
 // ================================================================================================
 impl ConstraintTable {
     pub fn new(trace: &TraceTable, trace_root: &[u8; 32], inputs: &[u128], outputs: &[u128]) -> ConstraintTable {
+        console_log!("hi im in constraint_table new. trace is {:?} ",trace);
+
+        console_log!("hi im in constraint_table new. trace.register.len is {:?},trace_root is {:?}, input is {:?}, output is {:?}",trace.register_count(),trace_root,inputs,outputs);
         let evaluator = ConstraintEvaluator::from_trace(trace, trace_root, inputs, outputs);
         let evaluation_domain_size = evaluator.domain_size();
+        console_log!("hi im in constraint_table new,evaluator.domain_size is {:?}",evaluator.domain_size());
         return ConstraintTable {
             evaluator       : evaluator,
             i_evaluations   : uninit_vector(evaluation_domain_size),

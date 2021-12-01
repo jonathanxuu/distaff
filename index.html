@@ -57,15 +57,18 @@
                 // let d = generate_program("begin push.1 read dup push.1 while.true roll.4 ne if.true swap push.1 add dup push.3 ne if.true swap dup push.1 else pad.3 end else push.1 pad end end end")
                 // let g = generate_program_hash("begin push.1 read dup push.1 while.true roll.4 ne if.true swap push.1 add dup push.3 ne if.true swap dup push.1 else pad.3 end else push.1 pad end end end")
                 // ⬇️ 这是kilt的四个credential的
-                let b = output_inputs_string("616765","1,90457658405290268147553990996635285742,3235206455,62970,16532,44561,248201482414258,22,294843316026996357320061269476730252737,311961394196786290997651265402075124671,137481426361217494534035299220960260701,309299447081900217115392982914725835472","64401974746417508784439638502889322168,127557015350448219066915144450596417715,172659092149451661923027031467059363089,221612621359750883861760366537409126742,280180491899205648968436524606020749934")
 
-
-                let f = generate_program("begin pad.1 swap.1 read.a dup.1 push.1 while.true read.ab pad.2 swap.4 roll.4 drop.1 roll.4 drop.1 push.1 sub dup.1 pad.1 lt.128 end  roll.4 drop.2	swap.1 repeat.5 read.a end read.a dup.1 push.20 gt.128 if.true pad.3 else read.ab kvalid pad.1 roll.4 swap.1 drop.1 push.4 swap.1 sub dup.1 dup.1 pad.1 lt.128 while.true read.ab roll.4 roll.4 push.1 sub dup.1 pad.1 lt.128 end drop.1 khash.5 pad.1 push.1 swap.2 roll.4 drop.1 end  end")
-                let g = generate_program_hash("begin pad.1 swap.1 read.a dup.1 push.1 while.true read.ab pad.2 swap.4 roll.4 drop.1 roll.4 drop.1 push.1 sub dup.1 pad.1 lt.128 end  roll.4 drop.2	swap.1 repeat.5 read.a end read.a dup.1 push.20 gt.128 if.true pad.3 else read.ab kvalid pad.1 roll.4 swap.1 drop.1 push.4 swap.1 sub dup.1 dup.1 pad.1 lt.128 while.true read.ab roll.4 roll.4 push.1 sub dup.1 pad.1 lt.128 end drop.1 khash.5 pad.1 push.1 swap.2 roll.4 drop.1 end end")
+                // let b = output_inputs_string("6383461,121364843949934","2864481297,11060,18159,33711,132378863100738,25,76264564711456200626912835053278337560,4084830804,2443,18069,37930,62029634802367,152,76264564711456200626912835053278337560,279556095869323719447724040100225139341,276262180632226947862112657503897473479,317117113141778722535850715491782072221","169055813545144094809884768883895701729,169055813545144094809884768883895701729,21116054508335819875786693621009039462,31711621678699923421751880602580976486,272400670575332256091272703125420122414")
+                // let f = generate_program("begin repeat.5 read.a end read.a dup.1 push.20 gt.128 if.true pad.5 else read.ab kvalid pad.1 pick.3 swap.1 drop.1 roll.4 drop.1 repeat.5 read.a end read.a dup.1 push.152 ne if.true pad.5 else read.ab kvalid repeat.3 read.ab end khash.5 pad.1 push.1 swap.2 roll.4 drop.1 end end end")
+                // let g = generate_program_hash("begin repeat.5 read.a end read.a dup.1 push.20 gt.128 if.true pad.5 else read.ab kvalid pad.1 pick.3 swap.1 drop.1 roll.4 drop.1 repeat.5 read.a end read.a dup.1 push.152 ne if.true pad.5 else read.ab kvalid repeat.3 read.ab end khash.5 pad.1 push.1 swap.2 roll.4 drop.1 end end end")
 
 
                 // let f = generate_program("begin read.ab read.ab read.ab read.ab push.1 push.2 pmpath.4 end")
-                // let g = generate_program_hash("begin read.a gt.128 end")
+                let b = output_inputs_string("18","29","")
+
+                let f = generate_program("begin read.a gt.128 end")
+
+                let g = generate_program_hash("begin read.a gt.128 end")
 
                 // let g = generate_program_hash("begin read.a gt.128 end")
 
@@ -87,7 +90,7 @@
                 //eq if.true eq else pad.1 end
                 //read.ab pick.2 pick.2 swap.1 roll.4 eq if.true eq else pad.1 end 
                 // let f = generate_program("begin read.a lt.128 if.true pad.1 else read.a eq end end ")
-                console.log(starks_proofgen(f,b,3,c))
+                console.log(starks_proofgen(f,b,8,c))
                 console.log(g)
               }).catch(console.error);
       </script>

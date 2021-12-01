@@ -32,12 +32,18 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
     // execute body of the program
     execute_blocks(program.root().body(), &mut decoder, &mut stack);
 
-    
-    close_block(&mut decoder, &mut stack, field::ZERO, true);
+    console_log!("im before close_block, decoder is {:?}",decoder);
+    console_log!("im before close_block, stack is {:?}",stack);
 
+    close_block(&mut decoder, &mut stack, field::ZERO, true);
+    console_log!("im before finalize_trace, decoder is {:?}",decoder);
     // fill in remaining steps to make sure the length of the trace is a power of 2
     decoder.finalize_trace();
+    console_log!("im after finalize_trace, decoder is {:?}",decoder);
+    console_log!("im before finalize_trace, stack is {:?}",stack);
     stack.finalize_trace();
+    console_log!("im after finalize_trace, stack is {:?}",stack);
+
 
     // save context and loop depths into variables before decoder is consumed
     let context_depth = decoder.max_ctx_stack_depth();
@@ -45,7 +51,12 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
 
     // merge decoder and stack register traces into a single vector
     let mut register_traces = decoder.into_register_traces();
+    console_log!("hello it's me .register_trace append decoder {:?}",register_traces);
+
     register_traces.append(&mut stack.clone().into_register_traces());
+    console_log!("hello it's me .register_trace append stack {:?}",&mut stack.clone().into_register_traces());
+    console_log!("hello it's me context_depth ={:?},loop_depth={:?}",context_depth,loop_depth);
+
     return (register_traces, context_depth, loop_depth);
 }
 
@@ -57,8 +68,9 @@ fn execute_blocks(blocks: &[ProgramBlock], decoder: &mut Decoder, stack: &mut St
 
     match &blocks[0] {
         ProgramBlock::Span(block) => {
+            console_log!("hi im in span!!!!!! block is {:?}",block);
             execute_span(block, decoder, stack, true)
-        
+
         },
 
         _ => panic!("first block in a sequence must be a Span block"),
@@ -118,9 +130,14 @@ fn execute_span(block: &Span, decoder: &mut Decoder, stack: &mut Stack, is_first
     // execute all other instructions in the block
     for i in 0..block.length() {
         let (op_code, op_hint) = block.get_op(i);
+        console_log!("i {:?}, before docoder.docoder_op, op_code is {:?}, op_hint is {:?},decoder is {:?}",i,op_code,op_hint,decoder);
         decoder.decode_op(op_code, op_hint.value());
+        console_log!("i {:?},after docoder.docoder_op, op_code is {:?}, op_hint is {:?},decoder is {:?}",i,op_code,op_hint,decoder);
 
+        console_log!("i {:?}, before stack.execute, op_code is {:?}, op_hint is {:?},stack is {:?}",i,op_code,op_hint,stack);
         stack.execute(op_code, op_hint);
+        console_log!("i {:?},after stack.execute, op_code is {:?}, op_hint is {:?},stack is {:?}",i,op_code,op_hint,stack);
+
 
     }
 
@@ -144,16 +161,20 @@ fn close_block(decoder: &mut Decoder, stack: &mut Stack, sibling_hash: u128, is_
     decoder.decode_op(OpCode::Noop, field::ZERO);
     stack.execute(OpCode::Noop, OpHint::None);
 
+    console_log!("im in close_block1,decoder is {:?}",decoder);
     // end the block, this prepares decoder registers for merging block hash into
     // program hash
     decoder.end_block(sibling_hash, is_true_branch);
     stack.execute(OpCode::Noop, OpHint::None);
+    console_log!("im in close_block2,decoder is {:?}",decoder);
 
     // execute NOOPs to merge block hash into the program hash
     for _ in 0..HACC_NUM_ROUNDS {
         decoder.decode_op(OpCode::Noop, field::ZERO);
         stack.execute(OpCode::Noop, OpHint::None);
     }
+    console_log!("im in close_block3,decoder is {:?}",decoder);
+
 }
 
 /// Executes the specified loop.

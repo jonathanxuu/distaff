@@ -456,10 +456,11 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
-    let ascii_string= ascii.to_string();
-    
+    let ascii_string = format!("{:x}",ascii);
     let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
     let ascii_final = String::from_utf8(ascii_vec).unwrap();
+
+
     let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
@@ -538,10 +539,10 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
 
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
-    let ascii_string= ascii.to_string();
-    
+    let ascii_string = format!("{:x}",ascii);
     let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
     let ascii_final = String::from_utf8(ascii_vec).unwrap();
+    
     let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
     let mut x1 = format!("{:x}", x1);
@@ -626,17 +627,25 @@ pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
         }; 
         hex_list.push(hex::decode(x1 + &y1).unwrap());
     };
+    console_log!("hex_list is {:?}",hex_list);
+
+    hex_list.sort();
+    console_log!("hex_list is {:?}",hex_list);
+
 
     for i in 0..n{
         concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
+    console_log!("concat is {:?}",concat_saltedhash);
 
-    let mut context = Blake2bSum::new(32);
-    let mut hash = context.read_bytes(&concat_saltedhash);
-    let mut bytes = Blake2bSum::as_bytes(&hash);
+    let context = Blake2bSum::new(32);
+    let hash = context.read_bytes(&concat_saltedhash);
+    let bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
 
     let head = &whole[0..32];
+    console_log!("head is {:?}",head);
+
     let i = u128::from_str_radix(head,16).unwrap();
     return i;
 }
@@ -664,17 +673,19 @@ pub fn khash_b(hash_in_khash: &Vec<u128>, n:u32) -> u128{
         }; 
         hex_list.push(hex::decode(x1 + &y1).unwrap());
     };
+    hex_list.sort();
 
     for i in 0..n{
         concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
 
-    let mut context = Blake2bSum::new(32);
-    let mut hash = context.read_bytes(&concat_saltedhash);
-    let mut bytes = Blake2bSum::as_bytes(&hash);
+    let context = Blake2bSum::new(32);
+    let hash = context.read_bytes(&concat_saltedhash);
+    let bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
-
     let rear = &whole[32..];
+    console_log!("rear is {:?}",rear);
+
     let i = u128::from_str_radix(rear,16).unwrap();
     return i;
 

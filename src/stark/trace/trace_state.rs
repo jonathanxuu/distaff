@@ -13,8 +13,8 @@ use wasm_bindgen_test::*;
 
 // CONSTANTS
 // ================================================================================================
-const NUM_OP_BITS: usize = NUM_CF_OP_BITS + NUM_LD_OP_BITS + NUM_HD_OP_BITS;
-const NUM_STATIC_DECODER_REGISTERS: usize = 1 + SPONGE_WIDTH + NUM_OP_BITS; // 1 is for op_counter
+const NUM_OP_BITS: usize = NUM_CF_OP_BITS + NUM_LD_OP_BITS + NUM_HD_OP_BITS; // 9
+const NUM_STATIC_DECODER_REGISTERS: usize = 1 + SPONGE_WIDTH + NUM_OP_BITS; // 1 is for op_counter //14
 
 // TYPES AND INTERFACES
 // ================================================================================================
@@ -115,7 +115,7 @@ impl TraceState {
     // STATIC FUNCTIONS
     // --------------------------------------------------------------------------------------------
     pub fn compute_decoder_width(ctx_depth: usize, loop_depth: usize) -> usize {
-        return NUM_STATIC_DECODER_REGISTERS + ctx_depth + loop_depth;
+        return NUM_STATIC_DECODER_REGISTERS + ctx_depth + loop_depth; // 14 + ctx_depth + loop_depth
     }
 
     // PUBLIC ACCESSORS

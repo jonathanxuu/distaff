@@ -629,13 +629,12 @@ pub fn parse_khash(program: &mut Vec<OpCode>, hints: &mut HintMap, op: &[&str], 
         return Err(AssemblyError::invalid_param_reason(op, step,
             format!("parameter {} is invalid; value must be between 2 and 15", n)))
     }
-    console_log!("your entered credential leaf number(n+1) is {:?}~~~~~~~~~~~~~~~~~~~~~`",n);
 
     // add a hint indicating that pmpath macro is about to begin
     hints.insert(program.len(), OpHint::KhashStart(n));
     
     // read the first node and its index onto the stack and make sure nodes are arranged
-    // correctly. Also, set initial value of binary multiplier to 1.
+    // correctly.
     program.extend_from_slice(&[OpCode::Khash]);
  
     // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16

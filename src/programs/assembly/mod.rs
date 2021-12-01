@@ -276,6 +276,7 @@ fn parse_op_token(op: Vec<&str>, op_codes: &mut Vec<OpCode>, op_hints: &mut Hint
 /// Adds a new Span block to a program block body based on currently parsed instructions.
 fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: &mut HintMap, force: bool) {
     // if there were no instructions in the current span, don't do anything
+    console_log!("hi im in add span,body is {:?}, op_codes is{:?}, op_hints is{:?}, force is {:?}",body,op_codes,op_hints,force);
     if op_codes.len() == 0 && !force { return };
 
     // pad the instructions to make ensure 16-cycle alignment
@@ -285,6 +286,7 @@ fn add_span(body: &mut Vec<ProgramBlock>, op_codes: &mut Vec<OpCode>, op_hints: 
 
     // add a new Span block to the body
     body.push(ProgramBlock::Span(Span::new(span_op_codes, op_hints.clone())));
+    console_log!("hi im in add span2,body is {:?}, op_codes is{:?}, op_hints is{:?}, force is {:?}",body,op_codes,op_hints,force);
 
     // clear op_codes and op_hints for the next Span block
     op_codes.clear();

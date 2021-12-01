@@ -52,7 +52,7 @@ impl TraceTable {
         for register in registers.iter() {
             assert!(register.len() == trace_length, "all register traces must have the same length");
         }
-
+        console_log!("registers are {:?}",registers);
         let polys = Vec::with_capacity(registers.len());
         return TraceTable {
             registers, polys,
@@ -152,6 +152,7 @@ impl TraceTable {
         // build inverse twiddles needed for FFT interpolation
         let root = field::get_root_of_unity(self.unextended_length());
 
+        console_log!("self.unextended_length() is {:?}",self.unextended_length());
         let inv_twiddles = fft::get_inv_twiddles(root, self.unextended_length());
         
         // move register traces into polys

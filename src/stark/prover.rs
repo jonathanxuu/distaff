@@ -25,7 +25,7 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
     let lde_domain = field::get_power_series(lde_root, trace.domain_size());
     
     let lde_twiddles = twiddles_from_domain(&lde_domain);
-
+    console_log!("led_twiddles.len is{:?}",lde_twiddles.len());
     // extend the execution trace registers to LDE domain
 
     trace.extend(&lde_twiddles);
