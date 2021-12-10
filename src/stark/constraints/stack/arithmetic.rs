@@ -1,7 +1,8 @@
 use super::{
 	are_equal, binary_not, enforce_left_shift, enforce_stack_copy, field, is_binary,
-	EvaluationResult,
+	EvaluationResult, is_between,
 };
+use sp_std::{vec, vec::Vec};
 
 // ARITHMETIC OPERATION
 // ================================================================================================
@@ -127,3 +128,43 @@ pub fn enforce_or(
 	aux.agg_constraint(0, op_flag, is_binary(x));
 	aux.agg_constraint(1, op_flag, is_binary(y));
 }
+
+
+/// Enforces constraints for Kvalid operation. The constraints are based on 9 elements of
+/// the stack; the rest of the stack is unaffected.
+pub fn enforce_kvalid(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128){
+
+    let kvalid_a = new_stack[0];
+    let kvalid_b = new_stack[1];
+    result.agg_constraint(0, op_flag, are_equal(field::kvalid_a(old_stack[7], old_stack[6], old_stack[5], old_stack[4], old_stack[3], old_stack[2], old_stack[0], old_stack[1], old_stack[8]), kvalid_a));
+    result.agg_constraint(1, op_flag, are_equal(field::kvalid_b(old_stack[7], old_stack[6], old_stack[5], old_stack[4], old_stack[3], old_stack[2], old_stack[0], old_stack[1], old_stack[8]), kvalid_b));
+
+    // ensure that the rest of the stack is shifted by 7 item to the left
+    enforce_left_shift(result, old_stack, new_stack, 9, 7, op_flag);
+}
+
+
+/// Enforces constraints for Khash operation. The constraints are based on 9 elements of
+/// the stack; the rest of the stack is unaffected.
+pub fn enforce_khash(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128){
+    let mut hash_in_khash :Vec<u128> = Vec::new();
+    let n = old_stack[0];
+    let is_between = is_between(2,15,n);
+    result.agg_constraint(0, op_flag, are_equal(field::ZERO,is_between));
+
+    if is_between == field::ZERO && (2 * n as usize) <= old_stack.len() {
+        for i in 0..n {
+            let k = (2 * (n - 1) - 2 * i ) as usize;
+                hash_in_khash.push(old_stack[k + 1]);
+                hash_in_khash.push(old_stack[k + 2]);
+        }
+        let khash_a = new_stack[0];
+        let khash_b = new_stack[1];
+
+        result.agg_constraint(1, op_flag, are_equal(field::khash_a(&hash_in_khash, n as u32),khash_a));
+        result.agg_constraint(2, op_flag, are_equal(field::khash_b(&hash_in_khash, n as u32),khash_b));
+        enforce_left_shift(result, old_stack, new_stack, (2 * n + 1) as usize, (2 * n - 1) as usize, op_flag);
+    }
+
+}
+

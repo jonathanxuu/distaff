@@ -1,6 +1,6 @@
 use super::utils::{
 	are_equal, binary_not, enforce_left_shift, enforce_right_shift, enforce_stack_copy,
-	extend_constants, is_binary, is_zero, EvaluationResult,
+	extend_constants, is_binary, is_zero, EvaluationResult, is_between,
 };
 use crate::{
 	math::{field, polynom},
@@ -15,7 +15,7 @@ use input::{enforce_push, enforce_read, enforce_read2};
 
 mod arithmetic;
 use arithmetic::{
-	enforce_add, enforce_and, enforce_inv, enforce_mul, enforce_neg, enforce_not, enforce_or,
+	enforce_add, enforce_and, enforce_inv, enforce_mul, enforce_neg, enforce_not, enforce_or, enforce_kvalid, enforce_khash,
 };
 
 mod manipulation;
@@ -185,6 +185,8 @@ fn enforce_constraints(current: &TraceState, next: &TraceState, ark: &[u128], re
 	enforce_not(&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Not.ld_index()]);
 	enforce_and(&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::And.ld_index()]);
 	enforce_or(&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Or.ld_index()]);
+	enforce_khash(&mut evaluations, old_stack, new_stack, ld_flags[OpCode::Khash.ld_index()]);
+	enforce_kvalid(&mut evaluations, old_stack, new_stack, ld_flags[OpCode::Kvalid.ld_index()]);
 
 	// comparison operations
 	enforce_eq(&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Eq.ld_index()]);

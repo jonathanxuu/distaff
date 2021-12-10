@@ -667,18 +667,9 @@ pub fn parse_kvalid(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Resu
     return Ok(true);
 }
 
-pub fn parse_khash(program: &mut Vec<OpCode>, hints: &mut HintMap, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
-    let n = read_param(op, step)?;
-    if n < 2 || n > 15 {
-        return Err(AssemblyError::invalid_param_reason(op, step,
-            format!("parameter {} is invalid; value must be between 2 and 15", n)))
-    }
+pub fn parse_khash(program: &mut Vec<OpCode>, op: &[&str], step: usize) -> Result<bool, AssemblyError> {
 
-    // add a hint indicating that pmpath macro is about to begin
-    hints.insert(program.len(), OpHint::KhashStart(n));
-    
-    // read the first node and its index onto the stack and make sure nodes are arranged
-    // correctly.
+
     program.extend_from_slice(&[OpCode::Khash]);
  
     // pad with NOOPs to make sure hashing starts on a step which is a multiple of 16

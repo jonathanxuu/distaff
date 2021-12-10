@@ -104,7 +104,7 @@ impl Stack {
 
 			OpCode::RescR => self.op_rescr(),
             OpCode::Kvalid     => self.op_kvalid(),
-            OpCode::Khash      => self.op_khash(op_hint),
+            OpCode::Khash      => self.op_khash(),
 		}
 	}
 
@@ -642,31 +642,24 @@ impl Stack {
 
         self.registers[0][self.step] = field::kvalid_a(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
         self.registers[1][self.step] = field::kvalid_b(x1, x2, x3, x4, x5, content, ctype_1, ctype_2, ascii);
+        assert!(self.registers[0][self.step] != 0 && self.registers[1][self.step]!=0,"kvalid error!!");
 
         self.shift_left(9, 7);
     }
 
-	fn op_khash(&mut self, hint: OpHint){
-		match hint {
-			OpHint::KhashStart(n) => {
-			   
-				let mut hash_in_khash :Vec<u128> = Vec::new();
-
-				for i in 1..(n + 1) {
-					let k = (2 * n - 2 * i + 1 ) as usize;
-					hash_in_khash.push(self.registers[k][self.step - 1]);
-					hash_in_khash.push(self.registers[k + 1][self.step - 1]);
-				}
-
-				self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
-				self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
-				self.shift_left((2 * n + 1) as usize, (2 * n - 1) as usize);
-
-			},
-			_ => panic!("execution hint {:?} is not valid for Khash operation", hint)
+    fn op_khash(&mut self){
+            
+		let mut hash_in_khash :Vec<u128> = Vec::new();
+		let n = self.registers[0][self.step -1] as u32;
+		for i in 0..n {
+			let k = (2 * (n - 1) - 2 * i ) as usize;
+				hash_in_khash.push(self.registers[k + 1][self.step - 1]);
+				hash_in_khash.push(self.registers[k + 2][self.step - 1]);
 		}
+			self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
+			self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
+			self.shift_left((2 * n + 1) as usize, (2 * n - 1) as usize);
 	}
-
 	// CRYPTOGRAPHIC OPERATIONS
 	// --------------------------------------------------------------------------------------------
 	fn op_rescr(&mut self) {

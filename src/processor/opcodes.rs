@@ -61,7 +61,8 @@ pub enum UserOps {
 	Inv = 0b0_11_01100, // no shift
 	Neg = 0b0_11_01101, // no shift
 	Not = 0b0_11_01110, // no shift
-	//???       = 0b0_11_01111,
+    Khash       = 0b0_11_01111, 
+
 	Read = 0b0_11_10000,  // right shift: 1
 	Read2 = 0b0_11_10001, // right shift: 2
 	Dup = 0b0_11_10010,   // right shift: 1
@@ -69,7 +70,7 @@ pub enum UserOps {
 	Dup4 = 0b0_11_10100,  // right shift: 4
 	Pad2 = 0b0_11_10101,  // right shift: 2
 	//???       = 0b0_11_10110,
-	//???       = 0b0_11_10111,
+    Kvalid      = 0b0_11_10111, 
 	Swap = 0b0_11_11000,   // no shift
 	Swap2 = 0b0_11_11001,  // no shift
 	Swap4 = 0b0_11_11010,  // no shift
@@ -83,8 +84,6 @@ pub enum UserOps {
 	Push = 0b0_00_11111,  // right shift: 1
 	Cmp = 0b0_01_11111,   // no shift
 	RescR = 0b0_10_11111, // no shift
-    Khash       = 0b0_11_10110,
-    Kvalid      = 0b0_11_11110,
 
 	// composite operations
 	Begin = 0b0_00_00000, // no shift
@@ -170,7 +169,6 @@ pub enum OpHint {
 	EqStart,
 	RcStart(u32),
 	CmpStart(u32),
-	KhashStart(u32),
 	PmpathStart(u32),
 	PushValue(u128),
 	None,
@@ -192,7 +190,6 @@ impl sp_std::fmt::Display for OpHint {
 			OpHint::RcStart(value) => write!(f, ".{}", value),
 			OpHint::CmpStart(value) => write!(f, ".{}", value),
 			OpHint::PmpathStart(value) => write!(f, ".{}", value),
-			OpHint::KhashStart(value)  => write!(f, ".{}", value),
 			OpHint::PushValue(value) => write!(f, "({})", value),
 			OpHint::None => Ok(()),
 		}

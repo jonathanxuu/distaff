@@ -337,63 +337,68 @@ pub fn kvalid_a(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
     let ascii_string = format!("{:x}",ascii);
-    let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
-    let ascii_final = String::from_utf8(ascii_vec).unwrap();
+    let ascii_vec = hex::decode(ascii_string.clone());
+    if ascii_vec.is_err(){
+        return 0;
+    } else if  String::from_utf8(ascii_vec.clone().unwrap()).is_err(){
+        return 0;
+    }else{
+        let ascii_final = String::from_utf8(ascii_vec.unwrap()).unwrap();
 
+        let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
-    let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
+        let mut x1 = format!("{:x}", x1);
+        let mut x2 = format!("{:x}", x2);
+        let mut x3 = format!("{:x}", x3);
+        let mut x4 = format!("{:x}", x4);    
+        let mut x5 = format!("{:x}", x5);
+        let y0 = String::from("0x");
 
-    let mut x1 = format!("{:x}", x1);
-    let mut x2 = format!("{:x}", x2);
-    let mut x3 = format!("{:x}", x3);
-    let mut x4 = format!("{:x}", x4);    
-    let mut x5 = format!("{:x}", x5);
-    let y0 = String::from("0x");
-
-    if x1.len() % 2 !=0{
+        if x1.len() % 2 !=0{
+                x1 = zero.clone() + &x1;
+        };
+        while x1.len() < 8{
             x1 = zero.clone() + &x1;
-    };
-    while x1.len() < 8{
-        x1 = zero.clone() + &x1;
-    }
-    if x2.len() % 2 !=0{
-        x2 = zero.clone() + &x2;
-    };
-    while x2.len() < 4{
-        x2 = zero.clone() + &x2;
-    }
-    if x3.len() % 2 !=0{
-        x3 = zero.clone() + &x3;
-    };
-    while x3.len() < 4{
-        x3 = zero.clone() + &x3;
-    }
-    if x4.len() % 2 !=0{
-        x4 = zero.clone() + &x4;
-    };    
-    while x4.len() < 4{
-        x4 = zero.clone() + &x4;
-    }
-    if x5.len() % 2 !=0{
-        x5 = zero.clone() + &x5;
-    };
-    while x5.len() < 12{
-        x5 = zero.clone() + &x5;
-    }
+        }
+        if x2.len() % 2 !=0{
+            x2 = zero.clone() + &x2;
+        };
+        while x2.len() < 4{
+            x2 = zero.clone() + &x2;
+        }
+        if x3.len() % 2 !=0{
+            x3 = zero.clone() + &x3;
+        };
+        while x3.len() < 4{
+            x3 = zero.clone() + &x3;
+        }
+        if x4.len() % 2 !=0{
+            x4 = zero.clone() + &x4;
+        };    
+        while x4.len() < 4{
+            x4 = zero.clone() + &x4;
+        }
+        if x5.len() % 2 !=0{
+            x5 = zero.clone() + &x5;
+        };
+        while x5.len() < 12{
+            x5 = zero.clone() + &x5;
+        }
 
-    let hyphen = String::from('-');
-    let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
-    let mut hasher = Blake2b256::digest(origin_string.as_bytes());
-    let mut whole = format!("{:x}", hasher.clone());
+        let hyphen = String::from('-');
+        let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+        let mut hasher = Blake2b256::digest(origin_string.as_bytes());
+        let mut whole = format!("{:x}", hasher.clone());
 
-    let go_to_hash = y4 + &y0 + &whole;
-    let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
-    let mut whole = format!("{:x}", hasher.clone());
+        let go_to_hash = y4 + &y0 + &whole;
+        let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
+        let mut whole = format!("{:x}", hasher.clone());
 
-    let head = &whole[0..32];
-    let rear = &whole[32..];
-    let i = u128::from_str_radix(head,16).unwrap();
-    return i;    
+        let head = &whole[0..32];
+        let rear = &whole[32..];
+        let i = u128::from_str_radix(head,16).unwrap();
+        return i;    
+    }
 }
 
 pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype_1:u128, ctype_2:u128, ascii:u128) -> u128{
@@ -420,71 +425,75 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
     let ctype_hash = y0+ &ctype_1 + &ctype_2;  
 
     let ascii_string = format!("{:x}",ascii);
-    let ascii_vec = hex::decode(ascii_string.clone()).unwrap();
-    let ascii_final = String::from_utf8(ascii_vec).unwrap();
-    
-    let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
+    let ascii_vec = hex::decode(ascii_string.clone());
+    if ascii_vec.is_err(){
+        return 0;
+    } else if  String::from_utf8(ascii_vec.clone().unwrap()).is_err(){
+        return 0;
+    }else{        
+        let ascii_final = String::from_utf8(ascii_vec.unwrap()).unwrap();
+        let origin_string = prefix + &ctype_hash + &joint_1 + &ascii_final + &joint_2 + &content.to_string() + &suffice;
 
-    let mut x1 = format!("{:x}", x1);
-    let mut x2 = format!("{:x}", x2);
-    let mut x3 = format!("{:x}", x3);
-    let mut x4 = format!("{:x}", x4);    
-    let mut x5 = format!("{:x}", x5);
-    let y0 = String::from("0x");
+        let mut x1 = format!("{:x}", x1);
+        let mut x2 = format!("{:x}", x2);
+        let mut x3 = format!("{:x}", x3);
+        let mut x4 = format!("{:x}", x4);    
+        let mut x5 = format!("{:x}", x5);
+        let y0 = String::from("0x");
 
-    if x1.len() % 2 !=0{
+        if x1.len() % 2 !=0{
+                x1 = zero.clone() + &x1;
+        };
+        while x1.len() < 8{
             x1 = zero.clone() + &x1;
-    };
-    while x1.len() < 8{
-        x1 = zero.clone() + &x1;
-    }
+        }
 
-    if x2.len() % 2 !=0{
-        x2 = zero.clone() + &x2;
-    };
+        if x2.len() % 2 !=0{
+            x2 = zero.clone() + &x2;
+        };
 
-    while x2.len() < 4{
-        x2 = zero.clone() + &x2;
-    }
-    if x3.len() % 2 !=0{
-        x3 = zero.clone() + &x3;
-    };
-    while x3.len() < 4{
-        x3 = zero.clone() + &x3;
-    }
-    if x4.len() % 2 !=0{
-        x4 = zero.clone() + &x4;
-    };    
-    while x4.len() < 4{
-        x4 = zero.clone() + &x4;
-    }
-    if x5.len() % 2 !=0{
-        x5 = zero.clone() + &x5;
-    };
-    while x5.len() < 12{
-        x5 = zero.clone() + &x5;
-    }
+        while x2.len() < 4{
+            x2 = zero.clone() + &x2;
+        }
+        if x3.len() % 2 !=0{
+            x3 = zero.clone() + &x3;
+        };
+        while x3.len() < 4{
+            x3 = zero.clone() + &x3;
+        }
+        if x4.len() % 2 !=0{
+            x4 = zero.clone() + &x4;
+        };    
+        while x4.len() < 4{
+            x4 = zero.clone() + &x4;
+        }
+        if x5.len() % 2 !=0{
+            x5 = zero.clone() + &x5;
+        };
+        while x5.len() < 12{
+            x5 = zero.clone() + &x5;
+        }
 
-    let hyphen = String::from('-');
-    let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
+        let hyphen = String::from('-');
+        let y4 = x1 + &hyphen + &x2 + &hyphen + &x3 + &hyphen + &x4 + &hyphen + &x5;
 
 
-    let mut hasher = Blake2b256::digest(origin_string.as_bytes());
-    let mut whole = format!("{:x}", hasher.clone());
+        let mut hasher = Blake2b256::digest(origin_string.as_bytes());
+        let mut whole = format!("{:x}", hasher.clone());
 
-    let go_to_hash = y4 + &y0 + &whole;
-    let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
-    let mut whole = format!("{:x}", hasher.clone());
+        let go_to_hash = y4 + &y0 + &whole;
+        let mut hasher = Blake2b256::digest(go_to_hash.as_bytes());
+        let mut whole = format!("{:x}", hasher.clone());
 
-    let head = &whole[0..32];
-    let rear = &whole[32..];
+        let head = &whole[0..32];
+        let rear = &whole[32..];
 
-    // let i = u128::from_str_radix(head,16).unwrap();
-    let i2 = u128::from_str_radix(rear,16).unwrap();
+        // let i = u128::from_str_radix(head,16).unwrap();
+        let i2 = u128::from_str_radix(rear,16).unwrap();
 
-    return i2;    
+        return i2;   
+    } 
 }
-
 pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
     let zero = String::from("0");
     let mut hex_list: Vec<Vec<u8>> = Vec::new();
@@ -507,14 +516,15 @@ pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
         }; 
         hex_list.push(hex::decode(x1 + &y1).unwrap());
     };
+    hex_list.sort();
 
     for i in 0..n{
         concat_saltedhash.append(&mut hex_list[i as usize]);
     } 
 
-    let context = Blake2bSum::new(32);
-    let hash = context.read_bytes(&concat_saltedhash);
-    let bytes = Blake2bSum::as_bytes(&hash);
+    let mut context = Blake2bSum::new(32);
+    let mut hash = context.read_bytes(&concat_saltedhash);
+    let mut bytes = Blake2bSum::as_bytes(&hash);
     let whole = hex::encode(bytes);
 
     let head = &whole[0..32];
@@ -545,6 +555,7 @@ pub fn khash_b(hash_in_khash: &Vec<u128>, n:u32) -> u128{
         }; 
         hex_list.push(hex::decode(x1 + &y1).unwrap());
     };
+    hex_list.sort();
 
     for i in 0..n{
         concat_saltedhash.append(&mut hex_list[i as usize]);
@@ -558,8 +569,8 @@ pub fn khash_b(hash_in_khash: &Vec<u128>, n:u32) -> u128{
     let rear = &whole[32..];
     let i = u128::from_str_radix(rear,16).unwrap();
     return i;
-
 }
+
 // RANDOMNESS
 // --------------------------------------------------------------------------------------------
 

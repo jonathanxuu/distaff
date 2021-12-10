@@ -28,6 +28,17 @@ pub fn are_equal(v1: u128, v2: u128) -> u128 {
 	return field::sub(v1, v2)
 }
 
+#[inline(always)]
+pub fn is_between(v1: u128, v2: u128, v: u128) -> u128 {
+    let i = 15;
+    let mut prod = field::ONE;
+    for i in v1..v2{
+        prod = field::mul(prod,field::sub(i, v));
+    }
+    return prod;
+}
+
+
 // COMMON STACK CONSTRAINTS
 // ================================================================================================
 

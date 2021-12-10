@@ -1,6 +1,6 @@
 use super::utils::{
 	are_equal, binary_not, enforce_left_shift, enforce_right_shift, enforce_stack_copy,
-	extend_constants, is_binary, is_zero, EvaluationResult,
+	extend_constants, is_binary, is_zero, EvaluationResult,is_between,
 };
 use crate::{
 	math::{field, polynom},

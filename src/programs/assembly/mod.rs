@@ -256,7 +256,7 @@ fn parse_op_token(
 		"smpath" => parse_smpath(op_codes, &op, step),
 		"pmpath" => parse_pmpath(op_codes, op_hints, &op, step),
         "kvalid" => parse_kvalid(op_codes, &op, step),
-        "khash" => parse_khash(op_codes, op_hints, &op, step),
+        "khash" => parse_khash(op_codes, &op, step),
 		_ => return Err(AssemblyError::invalid_op(&op, step)),
 	}?;
 
