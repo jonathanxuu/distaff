@@ -494,6 +494,7 @@ pub fn kvalid_b(x1:u128, x2:u128, x3:u128, x4:u128, x5:u128, content:u128, ctype
         return i2;   
     } 
 }
+
 pub fn khash_a(hash_in_khash: &Vec<u128>, n:u32) -> u128{
     let zero = String::from("0");
     let mut hex_list: Vec<Vec<u8>> = Vec::new();
