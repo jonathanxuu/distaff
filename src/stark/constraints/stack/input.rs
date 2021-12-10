@@ -1,10 +1,15 @@
 use super::{ enforce_right_shift };
+use wasm_bindgen_test::console_log;
 
 /// Enforces constraints for PUSH operation. The constraints on the first element of the stack
 /// are enforced in the Decoder where the value pushed onto the stack is injected into sponge
 /// state. This constraint enforces that the rest of the stack is shifted right by 1 element.
 pub fn enforce_push(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128)
 {
+    if op_flag == 1{
+        console_log!("im in push balbala old_stack is {:?}",old_stack);
+        console_log!("balbala new stack is {:?}",new_stack);
+    }
     enforce_right_shift(result, old_stack, new_stack, 1, op_flag);
 }
 

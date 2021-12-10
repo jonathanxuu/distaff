@@ -64,6 +64,7 @@ pub fn fft_in_place(values: &mut [u128], twiddles: &[u128], count: usize, stride
 pub fn get_twiddles(root: u128, size: usize) -> Vec<u128> {
     assert!(size.is_power_of_two());
     assert!(field::exp(root, size as u128) == field::ONE);
+
     let mut twiddles = field::get_power_series(root, size / 2);
     permute(&mut twiddles);
 
@@ -75,12 +76,14 @@ pub fn get_twiddles(root: u128, size: usize) -> Vec<u128> {
 }
 
 pub fn get_inv_twiddles(root: u128, size: usize) -> Vec<u128> {
+    //这里第一次进入的时候，root是 g，size是256， g^256 = 1
     let inv_root = field::exp(root, (size - 1) as u128);
-    
+    // 将root变换为 g^255 即 g^-1 
     console_log!("im in get_inv_twiddles,root is{:?},size -1 is {:?},inv_root is {:?}",root,size-1,inv_root);
     console_log!("im in get_inv_twiddles,test field is {:?}",field::exp(root, (size) as u128));
 
     return get_twiddles(inv_root, size);
+    //返回的是get_twiddles(g^-1, 256)————也就是 get_power_series(g^-1, 128)，即获得[(g^-1)^0,(g^-1)^1,,(g^-1)^2,....(g^-1)^127]
 }
 
 pub fn permute(v: &mut [u128]) {

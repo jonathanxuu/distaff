@@ -13,12 +13,12 @@ use wasm_bindgen_test::*;
 
 // CONSTANTS
 // ================================================================================================
-const NUM_OP_BITS: usize = NUM_CF_OP_BITS + NUM_LD_OP_BITS + NUM_HD_OP_BITS; // 9
-const NUM_STATIC_DECODER_REGISTERS: usize = 1 + SPONGE_WIDTH + NUM_OP_BITS; // 1 is for op_counter //14
+const NUM_OP_BITS: usize = NUM_CF_OP_BITS + NUM_LD_OP_BITS + NUM_HD_OP_BITS; // 10
+const NUM_STATIC_DECODER_REGISTERS: usize = 1 + SPONGE_WIDTH + NUM_OP_BITS; // 1 is for op_counter //15
 
 // TYPES AND INTERFACES
 // ================================================================================================
-#[derive(PartialEq)]
+#[derive(PartialEq,Debug)]
 pub struct TraceState {
     op_counter  : u128,
     sponge      : [u128; SPONGE_WIDTH],
@@ -34,7 +34,7 @@ pub struct TraceState {
     stack_depth : usize,
 
     cf_op_flags : [u128; NUM_CF_OPS],
-    ld_op_flags : [u128; NUM_LD_OPS],
+    pub ld_op_flags : [u128; NUM_LD_OPS],
     hd_op_flags : [u128; NUM_HD_OPS],
     begin_flag  : u128,
     noop_flag   : u128,
@@ -53,18 +53,18 @@ impl TraceState {
         return TraceState {
             op_counter  : 0,
             sponge      : [0; SPONGE_WIDTH],
-            cf_op_bits  : [0; NUM_CF_OP_BITS],
-            ld_op_bits  : [0; NUM_LD_OP_BITS],
-            hd_op_bits  : [0; NUM_HD_OP_BITS],
+            cf_op_bits  : [0; NUM_CF_OP_BITS],//3
+            ld_op_bits  : [0; NUM_LD_OP_BITS],//5
+            hd_op_bits  : [0; NUM_HD_OP_BITS],//2
             ctx_stack   : vec![0; cmp::max(ctx_depth, MIN_CONTEXT_DEPTH)],
             loop_stack  : vec![0; cmp::max(loop_depth, MIN_LOOP_DEPTH)],
             user_stack  : vec![0; cmp::max(stack_depth, MIN_STACK_DEPTH)],
             ctx_depth   : ctx_depth,
             loop_depth  : loop_depth,
             stack_depth : stack_depth,
-            cf_op_flags : [0; NUM_CF_OPS],
-            ld_op_flags : [0; NUM_LD_OPS],
-            hd_op_flags : [0; NUM_HD_OPS],
+            cf_op_flags : [0; NUM_CF_OPS], // 这里新建的时候就是 8 ，2 的 3次方
+            ld_op_flags : [0; NUM_LD_OPS],// 32 ， 2 的 5 次方
+            hd_op_flags : [0; NUM_HD_OPS],// 4  ， 2 的 2 次方
             begin_flag  : 0,
             noop_flag   : 0,
             op_flags_set: false,
@@ -115,7 +115,7 @@ impl TraceState {
     // STATIC FUNCTIONS
     // --------------------------------------------------------------------------------------------
     pub fn compute_decoder_width(ctx_depth: usize, loop_depth: usize) -> usize {
-        return NUM_STATIC_DECODER_REGISTERS + ctx_depth + loop_depth; // 14 + ctx_depth + loop_depth
+        return NUM_STATIC_DECODER_REGISTERS + ctx_depth + loop_depth; // 15 + ctx_depth + loop_depth
     }
 
     // PUBLIC ACCESSORS
@@ -280,106 +280,118 @@ impl TraceState {
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
     fn set_op_flags(&mut self) {
+        // 这里对op_flags进行设置，应当如何设置呢？——根据cf/ld/hd的值进行设置
+        // F.Y.I.：cf_bits 有 3 位， ld_bits有 5 位， hd_bits有 2 位
+        // 在本案例中，因为decoder阶段，每一步都是 (hacc,user_op) 所有这里如若是正确步骤，not0和not1 都是1 
+        let not_0 = binary_not(self.cf_op_bits[0]); // 传入0， not_0 = 1； 若传入1 ，not_0 = 0 ，若是中间值，得到的也就是1 - 中间值           , 内部 【1- 传入值】
+        let not_1 = binary_not(self.cf_op_bits[1]); // 若传入00，则not0 = 1, not1 = 1;
+        self.cf_op_flags[0] = field::mul(not_0, not_1); // flag[0] = 1 
+        self.cf_op_flags[1] = field::mul(self.cf_op_bits[0], not_1);// flag[1] = 0 * not_1 = 0
+        self.cf_op_flags[2] = field::mul(not_0, self.cf_op_bits[1]);// flag[2] = 1 * 0 = 0
+        self.cf_op_flags[3] = field::mul(self.cf_op_bits[0], self.cf_op_bits[1]);// flag[3] = 1 * 0 = 0
+        self.cf_op_flags.copy_within(0..4, 4); // 10001000
 
-        // set control flow flags
-        let not_0 = binary_not(self.cf_op_bits[0]);
-        let not_1 = binary_not(self.cf_op_bits[1]);
-        self.cf_op_flags[0] = field::mul(not_0, not_1);
-        self.cf_op_flags[1] = field::mul(self.cf_op_bits[0], not_1);
-        self.cf_op_flags[2] = field::mul(not_0, self.cf_op_bits[1]);
-        self.cf_op_flags[3] = field::mul(self.cf_op_bits[0], self.cf_op_bits[1]);
-        self.cf_op_flags.copy_within(0..4, 4);
-
-        let not_2 = binary_not(self.cf_op_bits[2]);
-        for i in 0..4 { self.cf_op_flags[i] = field::mul(self.cf_op_flags[i], not_2); }
+        let not_2 = binary_not(self.cf_op_bits[2]); // not2 = 1 
+        for i in 0..4 { self.cf_op_flags[i] = field::mul(self.cf_op_flags[i], not_2); } // 💗 1000 0000 是HACC对应得到的cf_op_flags
         for i in 4..8 { self.cf_op_flags[i] = field::mul(self.cf_op_flags[i], self.cf_op_bits[2]); }
 
-        // set low-degree operation flags
-        let not_0 = binary_not(self.ld_op_bits[0]);
-        let not_1 = binary_not(self.ld_op_bits[1]);
-        self.ld_op_flags[0] = field::mul(not_0, not_1);
-        self.ld_op_flags[1] = field::mul(self.ld_op_bits[0], not_1);
-        self.ld_op_flags[2] = field::mul(not_0, self.cf_op_bits[1]);
-        self.ld_op_flags[3] = field::mul(self.ld_op_bits[0], self.ld_op_bits[1]);
+        // set low-degree operation flags         
+        console_log!("-1 after not0/1 ld_op_bits is {:?},ld_op_flags is {:?}",self.ld_op_bits,self.ld_op_flags);
+
+        let not_0 = binary_not(self.ld_op_bits[0]); // 💗  假设 是read - 0，0，0，0，1 【尽管read对应的是10000，但是按最小位“与”，就是00001】
+        let not_1 = binary_not(self.ld_op_bits[1]);//  💗  read得到的ld op_flags 为[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.ld_op_flags[0] = field::mul(not_0, not_1);//  第17位为 1， 共 32 位， 因为read 是1，0，0，0，0 index 为16，则是第17个
+        self.ld_op_flags[1] = field::mul(self.ld_op_bits[0], not_1); // 假如是1，0，1，0，1 
+        self.ld_op_flags[2] = field::mul(not_0, self.cf_op_bits[1]); // 得到的是[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.ld_op_flags[3] = field::mul(self.ld_op_bits[0], self.ld_op_bits[1]);// 第 22 位为 1，共32位， index为21，则是第22个
         self.ld_op_flags.copy_within(0..4, 4);
+        console_log!("000 after not0/1 ld_op_bits is {:?},ld_op_flags is {:?}",self.ld_op_bits,self.ld_op_flags);
 
         let not_2 = binary_not(self.ld_op_bits[2]);
         for i in 0..4 { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], not_2); }
         for i in 4..8 { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], self.ld_op_bits[2]); }
         self.ld_op_flags.copy_within(0..8, 8);
+        console_log!("111 after not0/1 ld_op_bits is {:?},ld_op_flags is {:?}",self.ld_op_bits,self.ld_op_flags);
 
         let not_3 = binary_not(self.ld_op_bits[3]);
         for i in 0..8  { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], not_3); }
         for i in 8..16 { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], self.ld_op_bits[3]); }
         self.ld_op_flags.copy_within(0..16, 16);
+        console_log!("222 after not0/1 ld_op_bits is {:?},ld_op_flags is {:?}",self.ld_op_bits,self.ld_op_flags);
 
         let not_4 = binary_not(self.ld_op_bits[4]);
         for i in 0..16  { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], not_4); }
         for i in 16..32 { self.ld_op_flags[i] = field::mul(self.ld_op_flags[i], self.ld_op_bits[4]); }
+        console_log!("333 after not0/1 ld_op_bits is {:?},ld_op_flags is {:?}",self.ld_op_bits,self.ld_op_flags);
 
         // set high-degree operation flags
-        let not_0 = binary_not(self.hd_op_bits[0]);
-        let not_1 = binary_not(self.hd_op_bits[1]);
-        self.hd_op_flags[0] = field::mul(not_0, not_1);
+        let not_0 = binary_not(self.hd_op_bits[0]); // 0,0 对应的是 【1，0，0，0】 （push和begin）  🤔️ 猜测 表示9？
+        let not_1 = binary_not(self.hd_op_bits[1]);// 如果是1，1 对应的是【0 0 0 1】 （low degree的） 猜测 表示2？
+        self.hd_op_flags[0] = field::mul(not_0, not_1);// 1 0 对应的是 【0 1 0 0】 （实际上是0 1—— cmp） 猜测 表示 5？
         self.hd_op_flags[1] = field::mul(self.hd_op_bits[0], not_1);
         self.hd_op_flags[2] = field::mul(not_0, self.hd_op_bits[1]);
         self.hd_op_flags[3] = field::mul(self.hd_op_bits[0], self.hd_op_bits[1]);
+        // console_log!("after not0/1 ,hd_op_bits is {:?},hd_op_flags is {:?}",self.hd_op_bits,self.hd_op_flags);
 
         // compute flag for BEGIN operation which is just 0000000; the below is equivalent
         // to multiplying binary inverses of all op bits together.
         self.begin_flag = field::mul(
-            self.ld_op_flags[OpCode::Begin.ld_index()], 
-            self.hd_op_flags[OpCode::Begin.hd_index()]);
+            self.ld_op_flags[OpCode::Begin.ld_index()], // [0], ld_op_flags[0] = 1
+            self.hd_op_flags[OpCode::Begin.hd_index()]);// [0]  hd_op_flags[0] = 1
+        //💗 如果是begin，那么这个begin_flag的结果应当为1
 
         // compute flag for NOOP operation which is just 1111111; the below is equivalent to
         // multiplying all op bits together.
         self.noop_flag = field::mul(
-            self.ld_op_flags[OpCode::Noop.ld_index()], 
-            self.hd_op_flags[OpCode::Noop.hd_index()]);
+            self.ld_op_flags[OpCode::Noop.ld_index()], // 31    ld_op_flags[31] = 1
+            self.hd_op_flags[OpCode::Noop.hd_index()]);// 3     hd_op_flags [3] = 1
+        // 💗 如果是noop 那么这个noop_flag的结果应当为1
 
         // we need to make special adjustments for PUSH and ASSERT op flags so that they
         // don't coincide with BEGIN operation; we do this by multiplying each flag by a
         // single op_bit from another op bank; this increases degree of each flag by 1
-        debug_assert!(OpCode::Push.hd_index() == 0, "PUSH index is not 0!");
-        self.hd_op_flags[0] = field::mul(self.hd_op_flags[0], self.ld_op_bits[0]);
+        debug_assert!(OpCode::Push.hd_index() == 0, "PUSH index is not 0!"); // push 是 00 11111
+        self.hd_op_flags[0] = field::mul(self.hd_op_flags[0], self.ld_op_bits[0]); // 如果是 push ，那么push_hd_op_flags这个值是 1*0 = 0；
+                                                                                        // 如果是push 那么push ld_op_flags 这个值是    1*1=1
 
-        debug_assert!(OpCode::Assert.ld_index() == 0, "ASSERT index is not 0!");
-        self.ld_op_flags[0] = field::mul(self.ld_op_flags[0], self.hd_op_bits[0]);
+        debug_assert!(OpCode::Assert.ld_index() == 0, "ASSERT index is not 0!"); // assert 是11 00000
+        self.ld_op_flags[0] = field::mul(self.ld_op_flags[0], self.hd_op_bits[0]);// 如果是assert 那么 assert_hd_op_flags =  *0 = 0
+                                                                                        // 如果是assert 那么assert ld_op_flags =  1* 1 = 1
 
         // mark flags as set
         self.op_flags_set = true;
     }
 }
 
-impl fmt::Debug for TraceState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{:>4}] {:>32X?} {:?} {:?} {:?} {:>32X?} {:>32X?} {:?}",
-            self.op_counter,
-            self.sponge, 
-            self.cf_op_bits,
-            self.ld_op_bits,
-            self.hd_op_bits,
-            self.ctx_stack,
-            self.loop_stack,
-            self.user_stack
-        )
-    }
-}
+// impl fmt::Debug for TraceState {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(f, "[{:>4}] {:>32X?} {:?} {:?} {:?} {:>32X?} {:>32X?} {:?}",
+//             self.op_counter,
+//             self.sponge, 
+//             self.cf_op_bits,
+//             self.ld_op_bits,
+//             self.hd_op_bits,
+//             self.ctx_stack,
+//             self.loop_stack,
+//             self.user_stack
+//         )
+//     }
+// }
 
-impl fmt::Display for TraceState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{:>4}] {:>16X?} {:?} {:?} {:?} {:>16X?} {:>16X?} {:?}",
-            self.op_counter,
-            self.sponge.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
-            self.cf_op_bits,
-            self.ld_op_bits,
-            self.hd_op_bits,
-            self.ctx_stack.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
-            self.loop_stack.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
-            &self.user_stack[..self.stack_depth]
-        )
-    }
-}
+// impl fmt::Display for TraceState {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(f, "[{:>4}] {:>16X?} {:?} {:?} {:?} {:>16X?} {:>16X?} {:?}",
+//             self.op_counter,
+//             self.sponge.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
+//             self.cf_op_bits,
+//             self.ld_op_bits,
+//             self.hd_op_bits,
+//             self.ctx_stack.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
+//             self.loop_stack.iter().map(|x| x >> 64).collect::<Vec<u128>>(),
+//             &self.user_stack[..self.stack_depth]
+//         )
+//     }
+// }
 
 // HELPER FUNCTIONS
 // ================================================================================================

@@ -3,72 +3,93 @@ use super::{
     TraceState, FlowOps, UserOps, is_binary, binary_not, are_equal, EvaluationResult,
     CYCLE_MASK_IDX, PREFIX_MASK_IDX, PUSH_MASK_IDX,
 };
+use wasm_bindgen_test::console_log;
 
 // CONSTRAINT EVALUATOR
 // ================================================================================================
 
 pub fn enforce_op_bits(result: &mut [u128], current: &TraceState, next: &TraceState, masks: &[u128; 3])
 {
+    // result 包括15个元素，current是当前步骤状态，next是下一步骤，masks 是 CYCLE MASKS （constriant/decoder里面的mask）
     let mut i = 0;
 
     // make sure all op bits are binary and compute their product/sum
     let mut cf_bit_sum = 0;
-    for &op_bit in current.cf_op_bits() {
-        result[i] = is_binary(op_bit);
-        cf_bit_sum = add(cf_bit_sum, op_bit);
+    for &op_bit in current.cf_op_bits() { //3个
+        result[i] = is_binary(op_bit);  // 如果是二进制的，（即是原位的值），🌹 约束满足！那么result结果就是0
+        cf_bit_sum = add(cf_bit_sum, op_bit); // cf_bit_sum 最终变为3 位cf位的数字和
         i += 1;
     }
 
     let mut ld_bit_prod = 1;
-    for &op_bit in current.ld_op_bits() {
-        result[i] = is_binary(op_bit);
-        ld_bit_prod = mul(ld_bit_prod, op_bit);
+    for &op_bit in current.ld_op_bits() {//5 个
+        result[i] = is_binary(op_bit); // 如果是二进制的，（即是原位的值），🌹 约束满足！那么result结果就是0
+        ld_bit_prod = mul(ld_bit_prod, op_bit); // ld_bit_prod 是5位ld_bit位的乘积，一旦有一个是0，那么这个乘积就是0
         i += 1;
     }
 
     let mut hd_bit_prod = 1;
-    for &op_bit in current.hd_op_bits() {
-        result[i] = is_binary(op_bit);
-        hd_bit_prod = mul(hd_bit_prod, op_bit);
+    for &op_bit in current.hd_op_bits() {//2 个
+        result[i] = is_binary(op_bit);// 如果是二进制的，（即是原位的值），🌹 约束满足！那么result结果就是0
+        hd_bit_prod = mul(hd_bit_prod, op_bit);  //hd_bit_prod 是hd_bit位的乘积，一旦有一个是0，那么这个乘积就是0
         i += 1;
     }
 
     // when cf_ops = hacc, operation counter should be incremented by 1;
     // otherwise, operation counter should remain the same
+    // 当 cf_ops 是hacc， ————换句话说，也就是 cf_bit_sum = 0
+    // 那么operation counter 应当加1，否则operation counter不变 
     let op_counter = current.op_counter();
-    let is_hacc = current.cf_op_flags()[FlowOps::Hacc.op_index()];
-    let hacc_transition = mul(add(op_counter, field::ONE), is_hacc);
-    let rest_transition = mul(op_counter, binary_not(is_hacc));
-    result[i] = are_equal(add(hacc_transition, rest_transition), next.op_counter());
+    console_log!("im in enforce, current.ld_op_flags is {:?}",current.ld_op_flags);
+    let is_hacc = current.cf_op_flags()[FlowOps::Hacc.op_index()];  // 后面的index始终是 0 —— 因为hacc的index是 0
+    // 只要是本案例中的 恰时步骤，就应当是 HACC，所以is hacc = 1
+
+    let hacc_transition = mul(add(op_counter, field::ONE), is_hacc); //如果是hacc， (op_counter + 1) * is_hacc   一开始 是 1，..., 2
+    let rest_transition = mul(op_counter, binary_not(is_hacc)); // 如果是hacc 则rest_transition 就是 0；如果非hacc，那么rest_transition 非 0
+    result[i] = are_equal(add(hacc_transition, rest_transition), next.op_counter()); // 如果是一个 🌹约束满足！恰时操作，则 (a+b) = v2 ，即result [i] = 0  (第十一个）
     i += 1;
 
     // ld_ops and hd_ops can be all 0s at the first step, but cannot be all 0s
     // at any other step
-    result[i] = mul(op_counter, mul(binary_not(ld_bit_prod), binary_not(hd_bit_prod)));
-    i += 1;
-
+    result[i] = mul(op_counter, mul(binary_not(ld_bit_prod), binary_not(hd_bit_prod)));// 若ld中有一个是0，则prod为0，则binary_not为1， 若hd中有一个是0，则prod为0，则binary_not为1
+    i += 1;                                                                                   // 第十二个
+ 
     // when cf_ops are not all 0s, ld_ops and hd_ops must be all 1s
-    result[i] = mul(cf_bit_sum, binary_not(mul(ld_bit_prod, hd_bit_prod)));
+    result[i] = mul(cf_bit_sum, binary_not(mul(ld_bit_prod, hd_bit_prod)));  // 第十三个
     i += 1;
-    
-    let cf_op_flags = current.cf_op_flags();
+    console_log!("im in enforce2, current.ld_op_flags is {:?}",current.ld_op_flags);
+    let cf_op_flags = current.cf_op_flags();//💗 1000 0000 是HACC对应得到的cf_op_flags
 
     // VOID can be followed only by VOID
-    let current_void_flag = cf_op_flags[FlowOps::Void.op_index()];
-    let next_void_flag = next.cf_op_flags()[FlowOps::Void.op_index()];
-    result[i] = mul(current_void_flag, binary_not(next_void_flag));
+    let current_void_flag = cf_op_flags[FlowOps::Void.op_index()]; // 判断是不是void？ 若是则为1
+    console_log!("im in enforce, next.ld_op_flags is {:?}",next.ld_op_flags);
+    let next_void_flag = next.cf_op_flags()[FlowOps::Void.op_index()];// 判断next 是不是void 若是则为1
+    result[i] = mul(current_void_flag, binary_not(next_void_flag)); // 若满足 相同，则🌹满足约束～ 所以result = 0 // 第十四个
     i += 1;
 
     let hd_op_flags = current.hd_op_flags();
-
+    // 0,0 对应的是 【1，0，0，0】 （push和begin）  🤔️ 猜测 表示9？
+    // 1，1 对应的是【0 0 0 1】 （low degree的） 猜测 表示2？
+    // 1 0 对应的是 【0 1 0 0】 （实际上是0 1—— cmp） 猜测 表示 5？
+                //💗 1000 0000 是HACC对应得到的cf_op_flags
     // BEGIN, LOOP, BREAK, and WRAP are allowed only on one less than multiple of 16
+    console_log!("masks is {:?}",masks);
     let prefix_mask = masks[PREFIX_MASK_IDX];
-    result.agg_constraint(i, cf_op_flags[FlowOps::Begin.op_index()], prefix_mask);
-    result.agg_constraint(i, cf_op_flags[FlowOps::Loop.op_index()],  prefix_mask);
-    result.agg_constraint(i, cf_op_flags[FlowOps::Wrap.op_index()],  prefix_mask);
-    result.agg_constraint(i, cf_op_flags[FlowOps::Break.op_index()], prefix_mask);
+    result.agg_constraint(i, cf_op_flags[FlowOps::Begin.op_index()], prefix_mask); // index为[1]
+    result.agg_constraint(i, cf_op_flags[FlowOps::Loop.op_index()],  prefix_mask); // index为[4]
+    result.agg_constraint(i, cf_op_flags[FlowOps::Wrap.op_index()],  prefix_mask); // index为[5]
+    result.agg_constraint(i, cf_op_flags[FlowOps::Break.op_index()], prefix_mask); // index为[6]
+
+    // 在16的整数倍 - 1，应当放这四种
+     // 在16的倍数 -1 ，应当放这四种，如果是16的倍数-1，那么后面value的值应当为0
+
+    // fn agg_constraint(&mut self, index: usize, flag: u128, value: u128) {
+    //     self[index] = field::add(self[index], field::mul(flag, value));
+    // }
 
     // TEND and FEND is allowed only on multiples of 16
+    // 在16的倍数，应当放这两种，如果是16的倍数，那么后面两个value的值应当为0
+
     let base_cycle_mask = masks[CYCLE_MASK_IDX];
     result.agg_constraint(i, cf_op_flags[FlowOps::Tend.op_index()], base_cycle_mask);
     result.agg_constraint(i, cf_op_flags[FlowOps::Fend.op_index()], base_cycle_mask);

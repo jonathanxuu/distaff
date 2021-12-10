@@ -689,7 +689,6 @@ impl Stack {
                     self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
                     self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
                     self.shift_left((2 * n) as usize, (2 * n - 2) as usize);
-
                 },
                 _ => panic!("execution hint {:?} is not valid for Khash operation", hint)
             }

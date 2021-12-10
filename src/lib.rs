@@ -92,9 +92,11 @@ pub fn starks_proofgen(program_string: String, inputs_string: String, num_output
         "cannot produce more than {} outputs, but requested {}", MAX_OUTPUTS, num_outputs);
 
     // execute the program to create an execution trace
-    let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs);
+    let (trace, ctx_depth, loop_depth) = processor::execute(&program, &inputs); // ctx_loop_depth 都为 0
     // 这里trace是decoder和stack在执行过程中的所有步骤值
     console_log!("now the options.extension_factor() is {:?}",options.extension_factor());
+    //下一个函数的options.extension_factor 是32
+    
     let mut trace = stark::TraceTable::new(trace, ctx_depth, loop_depth, options.extension_factor());
     debug!("Generated execution trace of {} registers and {} steps",
         trace.register_count(),

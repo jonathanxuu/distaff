@@ -44,17 +44,17 @@ pub fn execute(program: &Program, inputs: &ProgramInputs) -> (Vec<Vec<u128>>, us
     stack.finalize_trace();
     console_log!("im after finalize_trace, stack is {:?}",stack);
 
-
+    console_log!("decoder.ctx_stack is {:?}",decoder.ctx_stack);
     // save context and loop depths into variables before decoder is consumed
     let context_depth = decoder.max_ctx_stack_depth();
     let loop_depth = decoder.max_loop_stack_depth();
 
     // merge decoder and stack register traces into a single vector
     let mut register_traces = decoder.into_register_traces();
-    console_log!("hello it's me .register_trace append decoder {:?}",register_traces);
+    console_log!("hello it's me .len is {:?},register_trace append decoder {:?}",register_traces.len(),register_traces);
 
     register_traces.append(&mut stack.clone().into_register_traces());
-    console_log!("hello it's me .register_trace append stack {:?}",&mut stack.clone().into_register_traces());
+    console_log!("hello it's me .len is {:?},register_trace append stack {:?}",register_traces.len(),&mut stack.clone().into_register_traces());
     console_log!("hello it's me context_depth ={:?},loop_depth={:?}",context_depth,loop_depth);
 
     return (register_traces, context_depth, loop_depth);

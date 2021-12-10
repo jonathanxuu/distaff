@@ -18,18 +18,28 @@ use wasm_bindgen_test::*;
 // ================================================================================================
 
 pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options: &ProofOptions) -> StarkProof {
+    // 换句话说 public inputs是 stack registers的初始状态（竖向），outputs是 stack registers的最终状态（竖向）  
+
     // 1 ----- extend execution trace -------------------------------------------------------------
     // build LDE domain and LDE twiddles (for FFT evaluation over LDE domain)
+
+    // trace.length 是 256
+    // domain_size = 8192 = trace.length * extend_factor = 256*32 
     let lde_root = field::get_root_of_unity(trace.domain_size());
+    // lde_root是 w , w^8192 为 1
+
     console_log!("trace.domain_size is {:?},lde_root is {:?}",trace.domain_size(),lde_root);
-    let lde_domain = field::get_power_series(lde_root, trace.domain_size());
     
+    // 获取求值列表，即[w^0,w^1,w^2,...w^8191] 记作 lde_domain
+    let lde_domain = field::get_power_series(lde_root, trace.domain_size());
+
+    // lde_domain的前半段 —— [w^0,w^1....w^4095] ，再进行转换，变成fft喜欢的格式（应该叫蝴蝶转换？）
     let lde_twiddles = twiddles_from_domain(&lde_domain);
-    console_log!("led_twiddles.len is{:?}",lde_twiddles.len());
+    console_log!("led_twiddles.len is{:?}",lde_twiddles.len()); //这里 lde_twiddles 的长度变为4196，只需在这4196个点上计算，就可以获得上面8192个点的值（FFT）
+    
     // extend the execution trace registers to LDE domain
-
+    // trace.register 变成了25个8192个点值（原先是256个点，先IFFT插值为多项式，再在8192个点上通过FFT求值，插值出度为256的多项式在8192个点上的值）
     trace.extend(&lde_twiddles);
-
 
     console_log!("Extended execution trace from {} to {} steps",
     trace.unextended_length(),
@@ -39,39 +49,67 @@ pub fn prove(trace: &mut TraceTable, inputs: &[u128], outputs: &[u128], options:
         trace.unextended_length(),
         trace.domain_size());
 
+    // 🌟  总结：经过第一步之后，对原本的trace（256个值，构成的度为255的多项式进行LDE，LDE 出了 8192 个值）
+
 
     // 2 ----- build Merkle tree from the extended execution trace ------------------------------------
+    // 将 extend 之后的 registers 做成一个merkle tree
     let trace_tree = trace.build_merkle_tree(options.hash_fn());
 
-    // 3 ----- evaluate constraints ---------------------------------------------------------------
-    // initialize constraint evaluation table
-    let mut constraints = ConstraintTable::new(&trace, trace_tree.root(), inputs, outputs);
+    // 🌟 总结：经过第二步后，按照t0（w^0），t1（w^0），..., t25(w^0) ,  t1(w^1)....这样的顺序 构建 merkle 树
 
+    // 3 ----- evaluate constraints ---------------------------------------------------------------
+    // 💗 对约束evaluate，使得最后得到约束们的度 都是一样的 ---> 都变成 ｜D_ev｜- |D_trace| ，最终要获得 25个 度为一样的多项式！！！！
+
+    // initialize constraint evaluation table
+    // trace register有25个数组，每个数组包括8192个值，这8192个值对应一个度为255的多项式
+    let mut constraints = ConstraintTable::new(&trace, trace_tree.root(), inputs, outputs);
+    
     // allocate space to hold current and next states for constraint evaluations
-    let mut current = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
-    let mut next = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());
+    let mut current = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth()); // 0 0 10
+
+    let mut next = TraceState::new(trace.ctx_depth(), trace.loop_depth(), trace.stack_depth());// 0 0 10
 
     // we don't need to evaluate constraints over the entire extended execution trace; we need
     // to evaluate them over the domain extended to match max constraint degree - thus, we can
     // skip most trace states for the purposes of constraint evaluation.
-    let stride = trace.extension_factor() / MAX_CONSTRAINT_DEGREE;
-    for i in (0..trace.domain_size()).step_by(stride) {
+    // 不需要在整个lde trace（8192个点上进行求值，只需要over the domain extended to match max constraint degree ）
+    // ❓ 提问 为什么这里需要stride 是 4 呢？ 我如果设置为1 就会失败 报错为：transition constraint at step 1 were not satisfied
+    // let stride = 8; // (32 /8) =4
+    let stride = trace.extension_factor() / MAX_CONSTRAINT_DEGREE; // (32 /8) =4
+
+    for i in (0..trace.domain_size()).step_by(stride) { // 一直到8188，step = 4
         // TODO: this loop should be parallelized and also potentially optimized to avoid copying
         // next state from the trace table twice
-
         // copy current and next states from the trace table; next state may wrap around the
         // execution trace (close to the end of the trace)
-        trace.fill_state(&mut current, i);
-        trace.fill_state(&mut next, (i + trace.extension_factor()) % trace.domain_size());
 
-        // evaluate the constraints
+
+        trace.fill_state(&mut current, i); // i = 0  //把第i个step第内容放入到 current里
+        
+        trace.fill_state(&mut next, (i + trace.extension_factor()) % trace.domain_size());// 后一个step 是32
+        console_log!("mimimi, current.op counter is {:?}.next.op_counter is {:?}",current.op_counter(),next.op_counter());
+        // 8180  20
+        // 8184  24 循环之后，超过要mod domain_size
+        // evaluate the constraints           // 在w^i 这个点上计算
+        console_log!("i is {:?},(i + trace.extension_factor()) % trace.domain_size()) is {:?}, i/ stride is {:?} ", i,((i + trace.extension_factor()) % trace.domain_size()),(i/stride));
+        // 如果是在 stride  = 1 时候， i=8 , 40的时候 会报错 step = i / stride = 8
+
         constraints.evaluate(&current, &next, lde_domain[i], i / stride);
+ 
+
+//         i is 4,(i + trace.extension_factor()) % trace.domain_size()) is 36, i/ stride is 1 
+// distaff.js:537  i_evaluations and f_evaluations are 20486433651043113535028758090298186447, 216580327664657836817417540207324874631
+// distaff.js:537 i is 8,(i + trace.extension_factor()) % trace.domain_size()) is 40, i/ stride is 2 
+// distaff.js:537  i_evaluations and f_evaluations are 333373991338476159732613542186543297857, 69744030813476473984372204887124696652
     }
 
-    debug!("Evaluated {} constraints over domain of {} elements",
-        constraints.constraint_count(),
+    console_log!("Evaluated {} constraints over domain of {} elements",
+        constraints.constraint_count(), //46 = 34个transition ，12个boundary——（1【op_counter】,2【programhash】，1【input】，8【output】）
         constraints.evaluation_domain_size());
 
+
+    
     // 4 ----- convert constraint evaluations into a polynomial -----------------------------------
     let constraint_poly = constraints.combine_polys();
     debug!("Converted constraint evaluations into a single polynomial of degree {}",

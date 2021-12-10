@@ -27,7 +27,7 @@ pub struct Decoder {
     ld_op_bits  : [Vec<u128>; NUM_LD_OP_BITS],
     hd_op_bits  : [Vec<u128>; NUM_HD_OP_BITS],
 
-    ctx_stack   : Vec<Vec<u128>>,
+    pub ctx_stack   : Vec<Vec<u128>>,
     ctx_depth   : usize,
 
     loop_stack  : Vec<Vec<u128>>,
@@ -122,7 +122,7 @@ impl Decoder {
     /// Merges all register traces into a single vector of traces.
     pub fn into_register_traces(mut self) -> Vec<Vec<u128>> {
         let mut registers: Vec<Vec<u128>> = Vec::new();
-
+        console_log!("im in into_ step is {:?}",self.step);
         registers.push(self.op_counter);
 
         let [r0, r1, r2, r3] = self.sponge_trace;
@@ -147,11 +147,15 @@ impl Decoder {
         registers.push(r0);
         registers.push(r1);
 
+        console_log!("registers.len() is {:?} regissssssster is {:?}",registers.len(),registers);
         // for context stack, first get rid of the outer-most context because it is always 0
         self.ctx_stack.pop();
+        console_log!("&mut self.ctx_stack is {:?}",&mut self.ctx_stack);
         registers.append(&mut self.ctx_stack);
 
         registers.append(&mut self.loop_stack);
+        console_log!("registers.len() is {:?} regissssssster is {:?}",registers.len(),registers);
+
 
         return registers;
     }

@@ -65,6 +65,7 @@ pub enum UserOps {
     Neg         = 0b0_11_01101,         // no shift
     Not         = 0b0_11_01110,         // no shift
     //???       = 0b0_11_01111,
+    Khash       = 0b0_11_01111, // bingo
 
     Read        = 0b0_11_10000,         // right shift: 1
     Read2       = 0b0_11_10001,         // right shift: 2
@@ -73,6 +74,9 @@ pub enum UserOps {
     Dup4        = 0b0_11_10100,         // right shift: 4
     Pad2        = 0b0_11_10101,         // right shift: 2
     //???       = 0b0_11_10110,
+
+    Kvalid      = 0b0_11_10111, //bingo
+
     //???       = 0b0_11_10111,
 
     Swap        = 0b0_11_11000,         // no shift
@@ -82,15 +86,13 @@ pub enum UserOps {
     Roll8       = 0b0_11_11100,         // no shift
     BinAcc      = 0b0_11_11101,         // no shift
     //???       = 0b0_11_11110,
+    // Kvalid      = 0b0_11_11110,
 
 
     // high-degree operations
     Push        = 0b0_00_11111,         // right shift: 1
     Cmp         = 0b0_01_11111,         // no shift
     RescR       = 0b0_10_11111,         // no shift
-    // Sha256     = 0b0_11_10110,
-    Khash       = 0b0_11_10110,
-    Kvalid      = 0b0_11_11110,
 // 
     // composite operations
     Begin       = 0b0_00_00000,         // no shift

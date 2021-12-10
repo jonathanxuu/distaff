@@ -16,7 +16,7 @@ use input::{ enforce_push, enforce_read, enforce_read2 };
 mod arithmetic;
 use arithmetic::{
     enforce_add, enforce_mul, enforce_inv, enforce_neg,
-    enforce_not, enforce_and, enforce_or,
+    enforce_not, enforce_and, enforce_or, enforce_khash
 };
 
 mod manipulation;
@@ -35,6 +35,7 @@ mod hash;
 use hash::{ enforce_rescr };
 
 use sp_std::{vec, vec::Vec};
+use wasm_bindgen_test::*;
 
 // CONSTANTS
 // ================================================================================================
@@ -44,6 +45,8 @@ const STACK_TRANSITION_DEGREE: usize = 7; // degree for all stack register trans
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug)]
+
 pub struct Stack {
     trace_length        : usize,
     cycle_length        : usize,
@@ -58,20 +61,33 @@ impl Stack {
 
     pub fn new(trace_length: usize, extension_factor: usize, stack_depth: usize) -> Stack 
     {
+        // 参数为 trace_length:256, extension_factor:8, stack_depth:10
+    
         // build an array of constraint degrees for the stack
+        // 先在degrees里面插两个[7,7]
         let mut degrees = Vec::from(&AUX_CONSTRAINT_DEGREES[..]);
+        
+        // 再给degrees里面补7，即补到 12 个 7
         degrees.resize(stack_depth + NUM_AUX_CONSTRAINTS, STACK_TRANSITION_DEGREE);
 
         // determine extended cycle length
+        // cycle_length = 16 * 8 = 128
         let cycle_length = BASE_CYCLE_LENGTH * extension_factor;
 
+
+        // 这里用的ARK是hasher里的ark 有12行的[每行16个]
+        // 先12个插值出多项式，再在 128个点上进行插值，插值出多项式，及128个点值
         // extend rounds constants by the specified extension factor
         let (ark_polys, ark_evaluations) = extend_constants(&ARK, extension_factor);
-        let ark_values = transpose_ark_constants(ark_evaluations, cycle_length);
+        // 将12个[128个点值]转置，转为128个[12个点值]
 
+        let ark_values = transpose_ark_constants(ark_evaluations, cycle_length);
         return Stack {
+            // 256    ,  128
             trace_length, cycle_length,
+            // 12个多项式在128个点上的点值转置，变成128个[12个点值]，12个多项式
             ark_values, ark_polys,
+            // 12个7
             constraint_degrees: degrees,
         };
     }
@@ -119,6 +135,8 @@ impl Stack {
 fn enforce_constraints(current: &TraceState, next: &TraceState, ark: &[u128], result: &mut [u128])
 {
     // split constraint evaluation result into aux constraints and stack constraints
+    // 这里 aux constraint 占 2 位，result 占 10 位
+    // aux用来确定参与运算的值是二进制的。
     let (aux, result) = result.split_at_mut(NUM_AUX_CONSTRAINTS);
 
     // get user stack registers from current and next steps
@@ -128,10 +146,12 @@ fn enforce_constraints(current: &TraceState, next: &TraceState, ark: &[u128], re
     // initialize a vector to hold stack constraint evaluations; this is needed because
     // constraint evaluator functions assume that the stack is at least 8 items deep; while
     // it may actually be smaller than that
+
+    // 新建一个全0的数组，长度是old_stack
     let mut evaluations = vec![field::ZERO; old_stack.len()];
 
     // 1 ----- enforce constraints for low-degree operations --------------------------------------
-    let ld_flags = current.ld_op_flags();
+    let ld_flags = current.ld_op_flags(); // ld_flags 表明这是哪一个low degree 操作（这里ld_flags 是index ，比如00..0010000，第16个是1，则是read操作）
 
     // assertion operations
     enforce_assert  (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Assert.ld_index()]);
@@ -165,7 +185,9 @@ fn enforce_constraints(current: &TraceState, next: &TraceState, ark: &[u128], re
     enforce_not     (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Not.ld_index()]);
     enforce_and     (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::And.ld_index()]);
     enforce_or      (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Or.ld_index()]);
-    
+    enforce_khash   (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Khash.ld_index()]);
+    // enforce_khash   (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::Kash.ld_index()]);
+
     // comparison operations
     enforce_eq      (&mut evaluations, aux, old_stack, new_stack, ld_flags[OpCode::Eq.ld_index()]);
     enforce_binacc  (&mut evaluations,      old_stack, new_stack, ld_flags[OpCode::BinAcc.ld_index()]);

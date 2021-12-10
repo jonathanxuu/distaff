@@ -3,6 +3,7 @@ use super::{
     are_equal, is_binary, binary_not, EvaluationResult,
     enforce_left_shift, enforce_stack_copy,
 };
+use wasm_bindgen_test::console_log;
 
 // ARITHMETIC OPERATION
 // ================================================================================================
@@ -58,6 +59,15 @@ pub fn enforce_neg(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], 
 
     // ensure nothing changed beyond the first item of the stack 
     enforce_stack_copy(result, old_stack, new_stack, 1, op_flag);
+}
+/// Enforces constraints for Khash operation. 
+pub fn enforce_khash(result: &mut [u128], old_stack: &[u128], new_stack: &[u128], op_flag: u128)
+{
+    if op_flag == 1{
+    console_log!("in khash balbala old_stack is {:?}",old_stack);
+    console_log!("balbala new stack is {:?}",new_stack);
+    }
+    //Todo
 }
 
 // BOOLEAN OPERATION

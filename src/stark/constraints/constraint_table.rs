@@ -7,6 +7,7 @@ use sp_std::{vec, vec::Vec};
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug)]
 pub struct ConstraintTable {
     evaluator       : ConstraintEvaluator,
     i_evaluations   : Vec<u128>,    // combined evaluations of boundary constraints at the first step
@@ -18,17 +19,31 @@ pub struct ConstraintTable {
 // ================================================================================================
 impl ConstraintTable {
     pub fn new(trace: &TraceTable, trace_root: &[u8; 32], inputs: &[u128], outputs: &[u128]) -> ConstraintTable {
-        console_log!("hi im in constraint_table new. trace is {:?} ",trace);
-
-        console_log!("hi im in constraint_table new. trace.register.len is {:?},trace_root is {:?}, input is {:?}, output is {:?}",trace.register_count(),trace_root,inputs,outputs);
+        // 这里传入的参数： trace的register是extend之后的，包含25个8192个点值的数组，trace_root是这些点值构成的roothash
+        // input是public_input（18），output是1——————换句话说，也就是stack：trace register最初的状态和最终的状态
+        
         let evaluator = ConstraintEvaluator::from_trace(trace, trace_root, inputs, outputs);
-        let evaluation_domain_size = evaluator.domain_size();
-        console_log!("hi im in constraint_table new,evaluator.domain_size is {:?}",evaluator.domain_size());
+        let evaluation_domain_size = evaluator.domain_size(); // 2048
         return ConstraintTable {
             evaluator       : evaluator,
-            i_evaluations   : uninit_vector(evaluation_domain_size),
-            f_evaluations   : uninit_vector(evaluation_domain_size),
-            t_evaluations   : uninit_vector(evaluation_domain_size),
+                // return Evaluator {
+                // decoder         : decoder,
+                // stack           : stack,
+                // coefficients    : ConstraintCoefficients::new(*trace_root, ctx_depth, loop_depth, stack_depth),// 返回的是两个 boundary_coefficients 和一个拥有68个元素的数组
+                // domain_size     : domain_size, //2048    这里是|d_ev|的domain size， 比 trace_domain 大了 8 倍 
+                // extension_factor: extension_factor, // 8
+                // t_constraint_num: t_constraint_degrees.len(), // 34
+                // t_degree_groups : group_transition_constraints(t_constraint_degrees, trace_length), //34个元素, 256
+                // t_evaluations   : t_evaluations, //空
+                // b_constraint_num: get_boundary_constraint_num(&inputs, &outputs), //1 + 2 + inputs长度 + outputs长度
+                // program_hash    : last_state.program_hash().to_vec(), 
+                // op_count        : last_state.op_counter(),
+                // inputs          : inputs.to_vec(),
+                // outputs         : outputs.to_vec(),
+                // b_degree_adj    : get_boundary_constraint_adjustment_degree(trace_length), // 约束 乘以 这个 度调整因子 ，会变成度都为|D_ev|- |D_trace|的多项式
+            i_evaluations   : uninit_vector(evaluation_domain_size),// 2048 个空
+            f_evaluations   : uninit_vector(evaluation_domain_size),// 2048 个空
+            t_evaluations   : uninit_vector(evaluation_domain_size),// 2048 个空
         };
     }
 
@@ -48,10 +63,17 @@ impl ConstraintTable {
     }
 
     /// Evaluates transition and boundary constraints at the specified step.
+    /// 在当前step计算 状态转移和边界约束
+    /// 调用函数为：  constraints.evaluate(&current, &next, lde_domain[i], i / stride);
     pub fn evaluate(&mut self, current: &TraceState, next: &TraceState, x: u128, step: usize) {
+        
+        // 首先 利用 current状态 和 lde的某个点，计算init_bound 和 last_bound
         let (init_bound, last_bound) = self.evaluator.evaluate_boundaries(current, x);
+
         self.i_evaluations[step] = init_bound;
         self.f_evaluations[step] = last_bound;
+        console_log!(" i_evaluations and f_evaluations are {:?}, {:?}",init_bound,last_bound);
+        // 然后是边界约束的 evaluation
         self.t_evaluations[step] = self.evaluator.evaluate_transition(current, next, x, step);
     }
 

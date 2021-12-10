@@ -26,6 +26,7 @@ impl TraceTable {
     /// Returns a trace table constructed from the specified register traces.
     pub fn new(registers: Vec<Vec<u128>>, ctx_depth: usize, loop_depth: usize, extension_factor: usize) -> TraceTable
     {
+        // 传入参数 ： ctx、loop_depth都为 0 ，extension_factor 为 32
         // validate extension factor
         assert!(extension_factor.is_power_of_two(), "trace extension factor must be a power of 2");
         assert!(extension_factor >= crate::MIN_EXTENSION_FACTOR,
@@ -41,42 +42,53 @@ impl TraceTable {
 
         // compute stack depth
         let decoder_width = TraceState::compute_decoder_width(ctx_depth, loop_depth);
+        // decoder_width在案例“begin read.a gt.128”中为15
+
         assert!(registers.len() > decoder_width, "user stack must consist of at least one register");
+        console_log!("ctx_depth is {:?},loop_depth is {:?}",ctx_depth,loop_depth);
         let stack_depth = registers.len() - decoder_width;
+        console_log!("im in new tracetable, registers.len is {:?},register[0].len() is {:?},stack_depth is {:?}",registers.len(),registers[0].len(),stack_depth);
+        // registers.len() = 25（在本测试案例中:“begin read.a gt.128”，其中decoder有15个 stack有10个）
 
         // validate register traces
         assert!(registers.len() < crate::MAX_REGISTER_COUNT,
             "execution trace cannot have more than {} registers", crate::MAX_REGISTER_COUNT);
-        let trace_length = registers[0].len();
+        let trace_length = registers[0].len(); // 256
         assert!(trace_length.is_power_of_two(), "execution trace length must be a power of 2");
         for register in registers.iter() {
             assert!(register.len() == trace_length, "all register traces must have the same length");
         }
         console_log!("registers are {:?}",registers);
         let polys = Vec::with_capacity(registers.len());
+        // 在本案例中一共有25个空polys，因为 registers.len 一共有25个数组——其中decoder有15个 stack有10个
         return TraceTable {
-            registers, polys,
-            ctx_depth, loop_depth, stack_depth,
-            trace_length, extension_factor
+            registers, polys, // 25个数组registers， 25个空polys
+            ctx_depth, loop_depth, stack_depth, // 0 0 15（stack_depth = 10）
+            trace_length, extension_factor // 256步 trace（op_counter）， 32 extension_factor
         };
     }
 
     /// Returns state of the trace table at the specified `step`.
     pub fn  get_state(&self, step: usize) -> TraceState {
-        let mut result = TraceState::new(self.ctx_depth, self.loop_depth, self.stack_depth);
+        // 第一次进入的时候，是trace.get_state(255)
+        let mut result = TraceState::new(self.ctx_depth, self.loop_depth, self.stack_depth); // 0 0 10
+        console_log!("im in get state,result is {:?}",result);
         self.fill_state(&mut result, step);
+        console_log!("im in get state,step is {:?},result is {:?}",step,result);
         return result;
     }
 
     /// Returns state of the trace table at the last step.
     pub fn get_last_state(&self) -> TraceState {
+        console_log!("im in get_last_state, self.extended is {:?},self.domain_size is{:?},self.extension_factor is {:?},self.unextened_length is {:?}",self.is_extended(),self.domain_size(),self.extension_factor,self.unextended_length());
         let last_step = if self.is_extended() {
             self.domain_size() - self.extension_factor()
         }
         else {
-            self.unextended_length() - 1
+            self.unextended_length() - 1 // 256-1 = 255
         };
         return self.get_state(last_step);
+        //第一次进入，是没有extened的状态，所以unextended_length是256，则get_state(255);
     }
 
     /// Copies trace table state at the specified `step` to the passed in `state` object.
@@ -147,44 +159,73 @@ impl TraceTable {
     pub fn extend(&mut self, twiddles: &[u128]) {
         assert!(!self.is_extended(), "trace table has already been extended");
         assert!(twiddles.len() * 2 == self.domain_size(), "invalid number of twiddles");
-        console_log!("self.domain_size is {:?}",self.domain_size());
+        console_log!("self.domain_size is {:?}",self.domain_size()); //domian_size是8192， twiddles的长度是4096
 
         // build inverse twiddles needed for FFT interpolation
-        let root = field::get_root_of_unity(self.unextended_length());
-
+        let root = field::get_root_of_unity(self.unextended_length()); //没有经过变换的原trace长度是256
+        //这里获得的root记作g， g^256 = 1
         console_log!("self.unextended_length() is {:?}",self.unextended_length());
+
         let inv_twiddles = fft::get_inv_twiddles(root, self.unextended_length());
-        
+        //返回的是:[(g^-1)^0,(g^-1)^1,,(g^-1)^2,....(g^-1)^127]  IFFT的前半部分（用于从值 返回到 多项式系数）
+
+
         // move register traces into polys
         sp_std::mem::swap(&mut self.registers, &mut self.polys);
 
         // extend all registers
-        let domain_size = self.domain_size();
+        let domain_size = self.domain_size(); // domian_size是8192
         for poly in self.polys.iter_mut() {
+            //现在poly里面装的是25个register的vec值，也就是25个多项式的点值，要将点值变为多项式的系数！！！！ IFFT
 
             // interpolate register trace into a polynomial
+            // 这一步使用fft方法（实际是IFFT，因为使用的是inv_twiddles）,获得的是第一个register (256个点)插值出来的多项式的系数
             polynom::interpolate_fft_twiddles(poly, &inv_twiddles, true);
             
             // allocate space to hold extended evaluations and copy the polynomial into it
+            // 新建一个长度是8192的数组，前256个数（一般是这样，因为256个点，度数一般也为256）是多项式的系数
             let mut register = vec![field::ZERO; domain_size];
             register[..poly.len()].copy_from_slice(&poly);
-            
+
             // evaluate the polynomial over extended domain
+            // 在twiddles（4096个点）上面对这个多项式（前256位有值，后面7000多个都是0）进行求值，这个多项式为256
+            // 求值结果当然是在两倍范围的结果，即8192个点上对于度为256的多项式的求值结果
+
             polynom::eval_fft_twiddles(&mut register, &twiddles, true);
+            
             self.registers.push(register);
         }
+        //总结：经过变换后，register里面变成8192个点在度为256的多项式的值，即为25个8192个点值
+
+        console_log!("registers.len() = {:?}",self.registers.len())
+        // my test 
+        // let mut test = [1,2,0,0];
+        // let mut field = [1,2];
+        // polynom::eval_fft_twiddles(&mut test, &field, true);
+        // console_log!("my test in polynom::eval_fft_twiddles:{:?} ",test);
+
     }
 
     /// Puts the trace table into a Merkle tree such that each state of the table becomes
     /// a distinct leaf in the tree; all registers at a given step are hashed together to
     /// form a single leaf value.
     pub fn build_merkle_tree(&self, hash: HashFunction) -> MerkleTree {
-        let mut trace_state = vec![field::ZERO; self.register_count()];
+        console_log!("im in build_merkle_tree, register_count = {:?}",self.register_count());// 25个register ，每个包括8192个点 （对应一个度为256的多项式）
+
+        console_log!("im in build_merkle_tree, self.domain_size = {:?}",self.domain_size()); // domain_size还是8192
+        let mut trace_state = vec![field::ZERO; self.register_count()];       
+        // 25个0， trace_state
+
         let mut hashed_states = uninit_vector::<[u8; 32]>(self.domain_size());
+        console_log!("im in build_merkle_tree, hashed_states.len is {:?}, = {:?}",hashed_states.len(),hashed_states);
+        // hashed_state长度为8192，包括8192个[u8;32]
+
+
         // TODO: this loop should be parallelized
         for i in 0..self.domain_size() {
             for j in 0..trace_state.len() {
                 trace_state[j] = self.registers[j][i];
+                // 25个register的每一步（25个值），和 0 做一次hash
             }
             hash(as_bytes(&trace_state), &mut hashed_states[i]);
         }

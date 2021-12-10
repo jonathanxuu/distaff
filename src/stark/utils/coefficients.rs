@@ -9,6 +9,7 @@ use crate::{
     NUM_CF_OP_BITS, NUM_LD_OP_BITS, NUM_HD_OP_BITS,
     stark::constraints::{ NUM_STATIC_DECODER_CONSTRAINTS, NUM_AUX_STACK_CONSTRAINTS },
 };
+use wasm_bindgen_test::*;
 
 // CONSTANTS
 // ================================================================================================
@@ -34,12 +35,14 @@ const NUM_CONSTRAINTS: usize = NUM_TRANSITION_CONSTRAINTS + 2 * NUM_BOUNDARY_CON
 
 // TYPES AND INTERFACES
 // ================================================================================================
+#[derive(Debug)]
+
 pub struct ConstraintCoefficients {
     pub i_boundary  : BoundaryCoefficients,
     pub f_boundary  : BoundaryCoefficients,
     pub transition  : Vec<u128>,
 }
-
+#[derive(Debug)]
 pub struct BoundaryCoefficients {
     pub op_counter  : [u128; 2],
     pub sponge      : [u128; SPONGE_WIDTH * 2],
@@ -61,17 +64,41 @@ pub struct CompositionCoefficients {
 // ================================================================================================
 impl ConstraintCoefficients {
     pub fn new(seed: [u8; 32], ctx_depth: usize, loop_depth: usize, stack_depth: usize) -> ConstraintCoefficients {
+        // seed, ctx_depth = 0, loop_depth = 0, stack_depth = 10
+        // NUM_CONSTRAINT的数量是172， 2 倍的就是 344
+        console_log!("NUM_CONSTRAINT is {:?}", NUM_CONSTRAINTS);
 
+        
         // generate a pseudo-random list of coefficients
+        // 伪随机生成 344 个系数
         let coefficients = field::prng_vector(seed, 2 * NUM_CONSTRAINTS);
 
         // copy coefficients for boundary constraints
         let (i_boundary, i) = build_boundary_coefficients(&coefficients);
         let (f_boundary, i) = build_boundary_coefficients(&coefficients[i..]);
+        console_log!("the final end i is {:?}",i);
+            // 向如下的结构里随便塞系数，获得两个随机的 i_boundary[0~94] 和 f_boundary[94~184]
+            // let mut result = BoundaryCoefficients {
+            //     op_counter  : [0; 2],
+            //     sponge      : [0; SPONGE_WIDTH * 2],
+            //     op_bits     : [0; NUM_OP_BITS * 2],
+            //     ctx_stack   : [0; MAX_CONTEXT_DEPTH * 2],
+            //     loop_stack  : [0; MAX_LOOP_DEPTH * 2],
+            //     user_stack  : [0; MAX_USER_STACK_IO_CONSTRAINTS * 2],
+            // };
 
+        // 这里有一点点不合理的地方就是i并不会累加，所以用coefficients[2i]或许更合适一点
         // copy coefficients for transition constraints
         let transition = build_transition_coefficients(&coefficients[i..], ctx_depth, loop_depth, stack_depth);
 
+            // 一共 34 个约束，每个约束 2 个系数
+            // 1. static decoder constraints (e.g. op counter, op bit constraints, sponge constraints etc.)// 20个约束
+            // 2. context stack constraints - the number depends on the actual context depth // 1个约束
+            // 3. loop stack constraints - the number depends on the actual loop depth // 1个约束
+            // 4. aux stack constraints //2个约束
+            // 5. user stack constraints - the number depends on the actual stack depth // 10个约束
+
+        // 返回的是两个 boundary_coefficients 和一个拥有68个元素的数组
         return ConstraintCoefficients { i_boundary, f_boundary, transition };
     }
 }
@@ -107,6 +134,7 @@ impl CompositionCoefficients {
 // ================================================================================================
 fn build_boundary_coefficients(coefficients: &[u128]) -> (BoundaryCoefficients, usize)
 {
+    // 传入参数是 344 个系数
     let mut result = BoundaryCoefficients {
         op_counter  : [0; 2],
         sponge      : [0; SPONGE_WIDTH * 2],
@@ -116,54 +144,60 @@ fn build_boundary_coefficients(coefficients: &[u128]) -> (BoundaryCoefficients, 
         user_stack  : [0; MAX_USER_STACK_IO_CONSTRAINTS * 2],
     };
 
-    let mut range: Range<usize> = Range { start: 0, end: 2 };
+    let mut range: Range<usize> = Range { start: 0, end: 2 }; //到2
     result.op_counter.copy_from_slice(&coefficients[range.clone()]);
 
-    range = range.slide(SPONGE_WIDTH * 2);
+    range = range.slide(SPONGE_WIDTH * 2); // + 8 到10
     result.sponge.copy_from_slice(&coefficients[range.clone()]);
 
-    range = range.slide(NUM_OP_BITS * 2);
+    range = range.slide(NUM_OP_BITS * 2);// +20 到 30
     result.op_bits.copy_from_slice(&coefficients[range.clone()]);
 
-    range = range.slide(MAX_CONTEXT_DEPTH * 2);
+    range = range.slide(MAX_CONTEXT_DEPTH * 2); // +32 到62
     result.ctx_stack.copy_from_slice(&coefficients[range.clone()]);
 
-    range = range.slide(MAX_LOOP_DEPTH * 2);
+    range = range.slide(MAX_LOOP_DEPTH * 2); // +16 到78
     result.loop_stack.copy_from_slice(&coefficients[range.clone()]);
 
-    range = range.slide(MAX_USER_STACK_IO_CONSTRAINTS * 2);
+    range = range.slide(MAX_USER_STACK_IO_CONSTRAINTS * 2); // +16 到 94
     result.user_stack.copy_from_slice(&coefficients[range.clone()]);
+    
+    console_log!("after operations the result is {:?}",result);
+    console_log!("after operations end is {:?}",range.end); //94
 
     return (result, range.end);
 }
 
 fn build_transition_coefficients(coefficients: &[u128], ctx_depth: usize, loop_depth: usize, stack_depth: usize) -> Vec<u128>{
+    // 传入参数 伪随机系数，0，0，10
 
-    let ctx_depth = sp_std::cmp::max(ctx_depth, MIN_CONTEXT_DEPTH);
-    let loop_depth = sp_std::cmp::max(loop_depth, MIN_LOOP_DEPTH);
-    let stack_depth = sp_std::cmp::max(stack_depth, MIN_STACK_DEPTH);
+    let ctx_depth = sp_std::cmp::max(ctx_depth, MIN_CONTEXT_DEPTH); // 1
+    let loop_depth = sp_std::cmp::max(loop_depth, MIN_LOOP_DEPTH); // 1
+    let stack_depth = sp_std::cmp::max(stack_depth, MIN_STACK_DEPTH); // 10
 
     // compute number of used transition constraints
-    let num_constraints = NUM_STATIC_DECODER_CONSTRAINTS
-        + ctx_depth
-        + loop_depth
-        + stack_depth
-        + NUM_AUX_STACK_CONSTRAINTS;
+    // 计算得 状态转移约束共有 34 个
+    let num_constraints = NUM_STATIC_DECODER_CONSTRAINTS // 34-2-10-2 = 20个
+        + ctx_depth // 1
+        + loop_depth // 1
+        + stack_depth // 10
+        + NUM_AUX_STACK_CONSTRAINTS; //2
 
+    // 每个状态转移约束都需要 2 个系数，共需要 68 个，先建一个长度为 68 的数组
     // we need 2 coefficients per constraint
     let mut result = vec![0; num_constraints * 2];
 
     // copy coefficients to the result vector skipping over coefficients for unused constraints;
     // the order of constraints is assumed to be:
-    // 1. static decoder constraints (e.g. op counter, op bit constraints, sponge constraints etc.)
-    // 2. context stack constraints - the number depends on the actual context depth
-    // 3. loop stack constraints - the number depends on the actual loop depth
-    // 4. aux stack constraints
-    // 5. user stack constraints - the number depends on the actual stack depth
+    // 1. static decoder constraints (e.g. op counter, op bit constraints, sponge constraints etc.)// 20个约束
+    // 2. context stack constraints - the number depends on the actual context depth // 1个约束
+    // 3. loop stack constraints - the number depends on the actual loop depth // 1个约束
+    // 4. aux stack constraints //2个约束
+    // 5. user stack constraints - the number depends on the actual stack depth // 10个约束
 
     let mut s_range = new_range(0, NUM_STATIC_DECODER_CONSTRAINTS * 2);
     let mut t_range = new_range(0, NUM_STATIC_DECODER_CONSTRAINTS * 2);
-    result[t_range.clone()].copy_from_slice(&coefficients[s_range.clone()]);
+    result[t_range.clone()].copy_from_slice(&coefficients[s_range.clone()]); 
 
     s_range = s_range.slide(ctx_depth * 2);
     t_range = t_range.slide(ctx_depth * 2);
