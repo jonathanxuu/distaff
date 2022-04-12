@@ -145,7 +145,8 @@ pub fn enforce_khash(result: &mut [u128], old_stack: &[u128], new_stack: &[u128]
     // let mut hash_in_khash: Vec<u128> = Vec::new();
     let n = old_stack[0];
     let is_between = is_between(2, 15, n);
-
+    let n = old_stack[0] as u32; // number of roothash 
+    let start = old_stack[1] as usize; // index of the start roothash
 
     if is_between == field::ZERO && (2 * n as usize) <= old_stack.len() {
         // for i in 0..n {
@@ -158,8 +159,8 @@ pub fn enforce_khash(result: &mut [u128], old_stack: &[u128], new_stack: &[u128]
             result,
             old_stack,
             new_stack,
-            (2 * n + 1) as usize,
-            (2 * n - 1) as usize,
+            start + (2 * n) as usize,
+            (2 * n ) as usize,
             op_flag,
         );
     }

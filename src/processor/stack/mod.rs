@@ -719,15 +719,21 @@ impl Stack {
 
     fn op_khash(&mut self) {
         let mut hash_in_khash: Vec<u128> = Vec::new();
-        let n = self.registers[0][self.step - 1] as u32;
+        let n = self.registers[0][self.step - 1] as u32; // number of roothash 
+        let start = self.registers[1][self.step - 1] as usize; // index of the start roothash
+        assert!(start > 1, "khash start index less than 1, must be wrong!!!");
         for i in 0..n {
-            let k = (2 * (n - 1) - 2 * i) as usize;
-            hash_in_khash.push(self.registers[k + 1][self.step - 1]);
-            hash_in_khash.push(self.registers[k + 2][self.step - 1]);
+            hash_in_khash.push(self.registers[(i * 2) as usize + start][self.step - 1]);
+            hash_in_khash.push(self.registers[(i * 2) as usize + 1 + start][self.step - 1]);
         }
         self.registers[0][self.step] = field::khash_a(&hash_in_khash, n);
         self.registers[1][self.step] = field::khash_b(&hash_in_khash, n);
-        self.shift_left((2 * n + 1) as usize, (2 * n - 1) as usize);
+        if start > 1 {
+            for i in 2..start + 1 {
+                self.registers[i][self.step] = self.registers[i][self.step - 1];
+            }
+        }
+        self.shift_left(start + (2 * n) as usize, (2 * n) as usize);
     }
     // CRYPTOGRAPHIC OPERATIONS
     // --------------------------------------------------------------------------------------------
